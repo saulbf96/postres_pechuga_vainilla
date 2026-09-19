@@ -40,8 +40,18 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// Sirve el Angular compilado (client/dist -> wwwroot). UseDefaultFiles busca index.html
+// como pagina inicial; UseStaticFiles sirve el resto (JS, CSS, imagenes).
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Cualquier ruta que no sea /api/... ni un archivo estatico existente, regresa index.html.
+// Necesario porque Angular Router maneja las rutas en el navegador (no existen como archivos
+// reales en el servidor) - sin esto, recargar la pagina en una ruta como /catalogo daria 404.
+app.MapFallbackToFile("index.html");
 
 app.Run();

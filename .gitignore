@@ -6,10 +6,13 @@ obj/
 # Visual Studio
 .vs/
 
-# Angular / Node (cuando creemos client/ en el Paso 7)
+# Angular / Node
 client/node_modules/
 client/dist/
 client/.angular/
+
+# Angular compilado y copiado a wwwroot (se regenera con ng build, ver Paso 10)
+src/PechugaVainilla.Api/wwwroot/
 
 # Base de datos local
 *.mdf
