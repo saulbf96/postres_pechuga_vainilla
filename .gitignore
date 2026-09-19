@@ -1,0 +1,24 @@
+# Compilados de .NET
+bin/
+obj/
+*.user
+
+# Visual Studio
+.vs/
+
+# Angular / Node (cuando creemos client/ en el Paso 7)
+client/node_modules/
+client/dist/
+client/.angular/
+
+# Base de datos local
+*.mdf
+*.ldf
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de Claude Code (no se suben al repositorio, como pediste)
+CLAUDE.md
+PROMPT_ETAPA_1.md

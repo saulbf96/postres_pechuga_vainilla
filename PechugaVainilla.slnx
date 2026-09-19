@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PechugaVainilla.Api/PechugaVainilla.Api.csproj" />
+    <Project Path="src/PechugaVainilla.Core/PechugaVainilla.Core.csproj" />
+    <Project Path="src/PechugaVainilla.Infrastructure/PechugaVainilla.Infrastructure.csproj" />
+  </Folder>
+</Solution>
