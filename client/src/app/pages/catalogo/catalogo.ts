@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CatalogoService } from '../../core/services/catalogo';
+import { CarritoService } from '../../core/services/carrito';
 import type { ProductoDto, VendedorDto } from '../../core/models/catalogo.model';
 
 type FiltroVendedor = 'todo' | string; // 'todo' o el slug del vendedor (ej. 'vainilla')
@@ -12,6 +13,10 @@ type FiltroVendedor = 'todo' | string; // 'todo' o el slug del vendedor (ej. 'va
 })
 export class Catalogo implements OnInit {
   private readonly catalogoService = inject(CatalogoService);
+  private readonly carritoService = inject(CarritoService);
+
+  // Muestra un "Agregado" temporal en el boton cuando se agrega un producto al carrito.
+  protected readonly agregadoRecien = signal<number | null>(null);
 
   protected readonly vendedores = signal<VendedorDto[]>([]);
   protected readonly productos = signal<ProductoDto[]>([]);
@@ -97,5 +102,26 @@ export class Catalogo implements OnInit {
       `Hola! Quiero pedir: ${producto.nombre} (${presentacion.nombre}) - $${presentacion.precio.toFixed(2)} - Cantidad: 1`;
 
     return `https://wa.me/${vendedor.whatsApp}?text=${encodeURIComponent(mensaje)}`;
+  }
+
+  protected agregarAlCarrito(producto: ProductoDto): void {
+    const presentacion = this.presentacionActual(producto);
+    if (!presentacion) {
+      return;
+    }
+
+    this.carritoService.agregar({
+      vendedorId: producto.vendedorId,
+      vendedorNombre: producto.vendedorNombre,
+      productoId: producto.id,
+      productoNombre: producto.nombre,
+      presentacionId: presentacion.id,
+      presentacionNombre: presentacion.nombre,
+      precioUnitario: presentacion.precio,
+      cantidad: 1,
+    });
+
+    this.agregadoRecien.set(producto.id);
+    setTimeout(() => this.agregadoRecien.set(null), 1500);
   }
 }

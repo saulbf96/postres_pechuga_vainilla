@@ -1,0 +1,58 @@
+<main class="px-4 md:px-16 py-6 md:py-10 flex flex-col gap-6">
+  <h1 class="font-titulo text-3xl md:text-5xl">Tu carrito</h1>
+
+  @if (carrito.items().length === 0) {
+    <div class="flex flex-col gap-4 items-start">
+      <p class="text-texto-secundario">Todavía no agregas nada.</p>
+      <a routerLink="/" class="h-11 px-5 rounded-full bg-fresa text-crema text-sm font-semibold flex items-center no-underline">
+        Ver catálogo
+      </a>
+    </div>
+  } @else {
+    <div class="flex flex-col gap-8 max-w-2xl">
+      @for (grupo of carrito.grupos(); track grupo.vendedorId) {
+        <section class="flex flex-col gap-3">
+          <h2 class="font-titulo text-xl">{{ grupo.vendedorNombre }}</h2>
+
+          @for (item of grupo.items; track item.presentacionId) {
+            <div class="flex items-center justify-between gap-3 py-2 border-b border-borde">
+              <div class="flex flex-col">
+                <span>{{ item.productoNombre }} <span class="text-texto-secundario">({{ item.presentacionNombre }})</span></span>
+                <span class="text-sm text-texto-secundario">${{ item.precioUnitario.toFixed(2) }} c/u</span>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <div class="flex items-center border border-borde rounded-full">
+                  <button type="button" (click)="cambiarCantidad(item, -1)" class="w-8 h-8 flex items-center justify-center bg-transparent cursor-pointer">−</button>
+                  <span class="w-6 text-center">{{ item.cantidad }}</span>
+                  <button type="button" (click)="cambiarCantidad(item, 1)" class="w-8 h-8 flex items-center justify-center bg-transparent cursor-pointer">+</button>
+                </div>
+
+                <span class="w-16 text-right">${{ (item.precioUnitario * item.cantidad).toFixed(2) }}</span>
+
+                <button type="button" (click)="quitar(item)" class="text-fresa bg-transparent border-0 cursor-pointer text-sm">Quitar</button>
+              </div>
+            </div>
+          }
+
+          <div class="flex justify-end font-semibold">
+            Subtotal {{ grupo.vendedorNombre }}: ${{ subtotalGrupo(grupo.items).toFixed(2) }}
+          </div>
+        </section>
+      }
+
+      <div class="flex items-center justify-between border-t border-borde pt-4">
+        <span class="font-titulo text-xl">Total</span>
+        <span class="font-titulo text-xl">${{ carrito.totalPrecio().toFixed(2) }}</span>
+      </div>
+
+      <button
+        type="button"
+        (click)="continuar()"
+        class="h-12 rounded-full bg-fresa text-crema text-sm font-semibold self-end px-8"
+      >
+        Continuar
+      </button>
+    </div>
+  }
+</main>

@@ -1,0 +1,79 @@
+<main class="px-4 md:px-16 py-10 md:py-16 flex flex-col items-center">
+  <form
+    (ngSubmit)="enviar()"
+    class="w-full max-w-sm flex flex-col gap-4 bg-white/60 p-6 md:p-8 rounded-2xl border border-borde"
+  >
+    <h1 class="font-titulo text-3xl mb-1">Crear cuenta</h1>
+
+    @if (errores().length > 0) {
+      <ul class="text-fresa text-sm list-disc pl-5">
+        @for (mensaje of errores(); track mensaje) {
+          <li>{{ mensaje }}</li>
+        }
+      </ul>
+    }
+
+    <label class="flex flex-col gap-1 text-sm">
+      Nombre
+      <input
+        type="text"
+        name="nombre"
+        [ngModel]="nombre()"
+        (ngModelChange)="nombre.set($event)"
+        required
+        class="h-11 px-4 rounded-xl border border-borde bg-white"
+      />
+    </label>
+
+    <label class="flex flex-col gap-1 text-sm">
+      Correo
+      <input
+        type="email"
+        name="email"
+        [ngModel]="email()"
+        (ngModelChange)="email.set($event)"
+        required
+        class="h-11 px-4 rounded-xl border border-borde bg-white"
+      />
+    </label>
+
+    <label class="flex flex-col gap-1 text-sm">
+      WhatsApp
+      <input
+        type="tel"
+        name="whatsApp"
+        placeholder="521XXXXXXXXXX"
+        [ngModel]="whatsApp()"
+        (ngModelChange)="whatsApp.set($event)"
+        required
+        class="h-11 px-4 rounded-xl border border-borde bg-white"
+      />
+    </label>
+
+    <label class="flex flex-col gap-1 text-sm">
+      Contraseña
+      <input
+        type="password"
+        name="password"
+        [ngModel]="password()"
+        (ngModelChange)="password.set($event)"
+        required
+        minlength="8"
+        class="h-11 px-4 rounded-xl border border-borde bg-white"
+      />
+      <span class="text-xs text-texto-secundario">Mínimo 8 caracteres, con al menos un número.</span>
+    </label>
+
+    <button
+      type="submit"
+      [disabled]="enviando()"
+      class="h-11 rounded-full bg-fresa text-crema text-sm font-semibold disabled:opacity-60"
+    >
+      {{ enviando() ? 'Creando cuenta...' : 'Crear cuenta' }}
+    </button>
+
+    <p class="text-sm text-texto-secundario">
+      ¿Ya tienes cuenta? <a routerLink="/login" class="text-fresa">Entra aquí</a>
+    </p>
+  </form>
+</main>

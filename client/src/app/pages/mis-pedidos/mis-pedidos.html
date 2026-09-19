@@ -1,0 +1,46 @@
+<main class="px-4 md:px-16 py-6 md:py-10 flex flex-col gap-6">
+  <h1 class="font-titulo text-3xl md:text-5xl">Mis pedidos</h1>
+
+  @if (cargando()) {
+    <p class="text-texto-secundario">Cargando...</p>
+  } @else if (pedidos().length === 0) {
+    <div class="flex flex-col gap-4 items-start">
+      <p class="text-texto-secundario">Todavía no has hecho ningún pedido.</p>
+      <a routerLink="/" class="h-11 px-5 rounded-full bg-fresa text-crema text-sm font-semibold flex items-center no-underline">
+        Ver catálogo
+      </a>
+    </div>
+  } @else {
+    <div class="flex flex-col gap-4 max-w-2xl">
+      @for (pedido of pedidos(); track pedido.id) {
+        <article class="border border-borde rounded-2xl p-4 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="font-titulo text-xl">{{ pedido.vendedorNombre }}</span>
+            <span
+              class="px-3 py-1 rounded-full text-xs font-medium"
+              [style.background]="colorEstado(pedido.estado).fondo"
+              [style.color]="colorEstado(pedido.estado).texto"
+            >
+              {{ pedido.estado }}
+            </span>
+          </div>
+
+          <span class="text-sm text-texto-secundario">
+            {{ pedido.puntoEntregaNombre }} · {{ pedido.fechaEntrega }} {{ pedido.horaEntrega }}
+          </span>
+
+          <ul class="text-sm list-disc pl-5">
+            @for (detalle of pedido.detalles; track detalle.id) {
+              <li>{{ detalle.cantidad }} × {{ detalle.nombreProducto }}</li>
+            }
+          </ul>
+
+          <div class="flex items-center justify-between pt-2 border-t border-borde">
+            <span class="text-sm text-texto-secundario">Pago: {{ pedido.estadoPago }}</span>
+            <span class="font-semibold">${{ pedido.total.toFixed(2) }}</span>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</main>

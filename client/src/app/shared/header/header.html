@@ -1,0 +1,37 @@
+<header class="flex items-center justify-between gap-3 h-16 md:h-[76px] px-4 md:px-16 border-b border-borde">
+  <a routerLink="/" class="flex items-center gap-3 no-underline text-cacao">
+    <svg width="36" height="36" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <circle cx="32" cy="32" r="30" stroke="#8F2A3F" stroke-width="1.5" />
+      <circle cx="32" cy="32" r="25" stroke="#8F2A3F" stroke-width="0.75" />
+      <text x="32" y="39" text-anchor="middle" font-family="Fraunces, serif" font-style="italic" font-size="21" fill="#8F2A3F">P&amp;V</text>
+    </svg>
+    <span class="font-titulo text-lg md:text-xl hidden sm:inline">Pechuga <span class="italic">&amp;</span> Vainilla</span>
+  </a>
+
+  <nav class="flex items-center gap-3 md:gap-5 text-sm">
+    @if (auth.usuario()) {
+      <a routerLink="/mis-pedidos" class="text-cacao no-underline">Mis pedidos</a>
+    }
+
+    <a routerLink="/carrito" class="relative flex items-center gap-1 text-cacao no-underline">
+      Carrito
+      @if (carrito.totalItems() > 0) {
+        <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-fresa text-crema text-[11px] font-semibold">
+          {{ carrito.totalItems() }}
+        </span>
+      }
+    </a>
+
+    @if (auth.usuario()) {
+      <button
+        type="button"
+        (click)="salir()"
+        class="text-cacao bg-transparent border-0 p-0 cursor-pointer text-sm underline"
+      >
+        Salir
+      </button>
+    } @else {
+      <a routerLink="/login" class="text-cacao no-underline">Entrar</a>
+    }
+  </nav>
+</header>

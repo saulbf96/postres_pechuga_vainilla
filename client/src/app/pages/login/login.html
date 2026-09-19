@@ -1,0 +1,48 @@
+<main class="px-4 md:px-16 py-10 md:py-16 flex flex-col items-center">
+  <form
+    (ngSubmit)="enviar()"
+    class="w-full max-w-sm flex flex-col gap-4 bg-white/60 p-6 md:p-8 rounded-2xl border border-borde"
+  >
+    <h1 class="font-titulo text-3xl mb-1">Entrar</h1>
+
+    @if (error()) {
+      <p class="text-fresa text-sm">{{ error() }}</p>
+    }
+
+    <label class="flex flex-col gap-1 text-sm">
+      Correo
+      <input
+        type="email"
+        name="email"
+        [ngModel]="email()"
+        (ngModelChange)="email.set($event)"
+        required
+        class="h-11 px-4 rounded-xl border border-borde bg-white"
+      />
+    </label>
+
+    <label class="flex flex-col gap-1 text-sm">
+      Contraseña
+      <input
+        type="password"
+        name="password"
+        [ngModel]="password()"
+        (ngModelChange)="password.set($event)"
+        required
+        class="h-11 px-4 rounded-xl border border-borde bg-white"
+      />
+    </label>
+
+    <button
+      type="submit"
+      [disabled]="enviando()"
+      class="h-11 rounded-full bg-fresa text-crema text-sm font-semibold disabled:opacity-60"
+    >
+      {{ enviando() ? 'Entrando...' : 'Entrar' }}
+    </button>
+
+    <p class="text-sm text-texto-secundario">
+      ¿No tienes cuenta? <a routerLink="/registro" class="text-fresa">Crea una</a>
+    </p>
+  </form>
+</main>

@@ -1,0 +1,148 @@
+<main class="px-4 md:px-16 py-6 md:py-10 flex flex-col gap-6 max-w-2xl">
+  <h1 class="font-titulo text-3xl md:text-5xl">Confirmar pedido</h1>
+
+  @if (error()) {
+    <p class="text-fresa text-sm">{{ error() }}</p>
+  }
+
+  <!-- Datos del cliente -->
+  <section class="flex flex-col gap-3">
+    <h2 class="font-titulo text-xl">Tus datos</h2>
+
+    <label class="flex flex-col gap-1 text-sm">
+      Nombre
+      <input
+        type="text"
+        [ngModel]="nombreCliente()"
+        (ngModelChange)="nombreCliente.set($event)"
+        class="h-11 px-4 rounded-xl border border-borde bg-white"
+      />
+    </label>
+
+    <label class="flex flex-col gap-1 text-sm">
+      WhatsApp
+      <input
+        type="tel"
+        placeholder="521XXXXXXXXXX"
+        [ngModel]="whatsApp()"
+        (ngModelChange)="whatsApp.set($event)"
+        class="h-11 px-4 rounded-xl border border-borde bg-white"
+      />
+    </label>
+
+    <label class="flex flex-col gap-1 text-sm">
+      Referencia de entrega (opcional)
+      <input
+        type="text"
+        placeholder="Depto, salón, punto de referencia..."
+        [ngModel]="detalleEntrega()"
+        (ngModelChange)="detalleEntrega.set($event)"
+        class="h-11 px-4 rounded-xl border border-borde bg-white"
+      />
+    </label>
+  </section>
+
+  <!-- Un bloque por vendedor -->
+  @for (seleccion of selecciones(); track seleccion.vendedorId) {
+    <section class="flex flex-col gap-3 border border-borde rounded-2xl p-4">
+      <h2 class="font-titulo text-xl">{{ seleccion.vendedorNombre }}</h2>
+
+      <ul class="text-sm text-texto-secundario list-disc pl-5">
+        @for (item of seleccion.items; track item.presentacionId) {
+          <li>{{ item.cantidad }} × {{ item.productoNombre }} ({{ item.presentacionNombre }})</li>
+        }
+      </ul>
+      <div class="text-sm font-semibold">Subtotal: ${{ subtotalGrupo(seleccion.items).toFixed(2) }}</div>
+
+      @if (seleccion.puntosEntrega.length === 0) {
+        <p class="text-sm text-texto-secundario">Cargando puntos de entrega...</p>
+      } @else {
+        <label class="flex flex-col gap-1 text-sm">
+          Punto de entrega
+          <select
+            [ngModel]="seleccion.puntoEntregaId"
+            (ngModelChange)="actualizarCampo(seleccion.vendedorId, { puntoEntregaId: $event })"
+            class="h-11 px-4 rounded-xl border border-borde bg-white"
+          >
+            @for (punto of seleccion.puntosEntrega; track punto.id) {
+              <option [value]="punto.id">
+                {{ punto.nombre }} ({{ punto.costoEnvio > 0 ? ('+$' + punto.costoEnvio.toFixed(2)) : 'sin costo' }})
+              </option>
+            }
+          </select>
+        </label>
+
+        @if (puntoElegido(seleccion); as punto) {
+          <p class="text-xs text-texto-secundario">
+            Atiende: {{ punto.diasSemana.join(', ') }} · {{ punto.horaInicio }}–{{ punto.horaFin }}
+            · pide con {{ punto.diasAnticipacion }} día(s) de anticipación, antes de las {{ punto.horaLimitePedido }}
+          </p>
+        }
+
+        <div class="flex gap-3">
+          <label class="flex flex-col gap-1 text-sm flex-1">
+            Fecha
+            <input
+              type="date"
+              [min]="fechaMinima(seleccion)"
+              [ngModel]="seleccion.fecha"
+              (ngModelChange)="actualizarCampo(seleccion.vendedorId, { fecha: $event })"
+              class="h-11 px-4 rounded-xl border border-borde bg-white"
+            />
+          </label>
+
+          <label class="flex flex-col gap-1 text-sm flex-1">
+            Hora
+            <input
+              type="time"
+              [ngModel]="seleccion.hora"
+              (ngModelChange)="actualizarCampo(seleccion.vendedorId, { hora: $event })"
+              class="h-11 px-4 rounded-xl border border-borde bg-white"
+            />
+          </label>
+        </div>
+      }
+    </section>
+  }
+
+  <!-- Metodo de pago -->
+  <section class="flex flex-col gap-2">
+    <h2 class="font-titulo text-xl">Cómo vas a pagar</h2>
+    <p class="text-xs text-texto-secundario">
+      Por ahora solo efectivo o transferencia — el pago con tarjeta en línea llega en una etapa posterior.
+    </p>
+    <div class="flex gap-2">
+      <button
+        type="button"
+        (click)="metodoPago.set('Efectivo')"
+        class="h-11 px-5 rounded-full text-sm font-semibold"
+        [class.bg-fresa]="metodoPago() === 'Efectivo'"
+        [class.text-crema]="metodoPago() === 'Efectivo'"
+        [class.border]="metodoPago() !== 'Efectivo'"
+        [class.border-borde]="metodoPago() !== 'Efectivo'"
+      >
+        Efectivo al recibir
+      </button>
+      <button
+        type="button"
+        (click)="metodoPago.set('Transferencia')"
+        class="h-11 px-5 rounded-full text-sm font-semibold"
+        [class.bg-fresa]="metodoPago() === 'Transferencia'"
+        [class.text-crema]="metodoPago() === 'Transferencia'"
+        [class.border]="metodoPago() !== 'Transferencia'"
+        [class.border-borde]="metodoPago() !== 'Transferencia'"
+      >
+        Transferencia
+      </button>
+    </div>
+  </section>
+
+  <button
+    type="button"
+    (click)="enviar()"
+    [disabled]="enviando()"
+    class="h-12 rounded-full bg-fresa text-crema text-sm font-semibold disabled:opacity-60"
+  >
+    {{ enviando() ? 'Enviando...' : 'Confirmar pedido' }}
+  </button>
+</main>
