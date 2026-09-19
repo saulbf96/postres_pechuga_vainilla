@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using PechugaVainilla.Core.Interfaces;
 using PechugaVainilla.Infrastructure.Data;
+using PechugaVainilla.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +13,11 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<PechugaVainillaDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+
+// AddScoped: una instancia nueva de cada servicio por peticion HTTP.
+// Aqui conectamos la interfaz (lo que pide el controller) con su implementacion real (Infrastructure).
+builder.Services.AddScoped<IVendedorService, VendedorService>();
+builder.Services.AddScoped<IProductoService, ProductoService>();
 
 var app = builder.Build();
 
