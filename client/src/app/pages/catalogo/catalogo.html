@@ -1,0 +1,132 @@
+<div class="min-h-screen bg-crema text-cacao font-texto">
+
+  <!-- Encabezado: sello + nombre de marca. Sin login/carrito todavia (eso es Etapa 2). -->
+  <header class="flex items-center gap-3 h-16 md:h-[76px] px-4 md:px-16 border-b border-borde">
+    <svg width="36" height="36" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <circle cx="32" cy="32" r="30" stroke="#8F2A3F" stroke-width="1.5" />
+      <circle cx="32" cy="32" r="25" stroke="#8F2A3F" stroke-width="0.75" />
+      <text x="32" y="39" text-anchor="middle" font-family="Fraunces, serif" font-style="italic" font-size="21" fill="#8F2A3F">P&amp;V</text>
+    </svg>
+    <span class="font-titulo text-lg md:text-xl">Pechuga <span class="italic">&amp;</span> Vainilla</span>
+  </header>
+
+  <main class="px-4 md:px-16 py-6 md:py-10 flex flex-col gap-5 md:gap-7">
+
+    <!-- Titulo -->
+    <div class="flex flex-col gap-2">
+      <span class="text-xs font-semibold tracking-[0.14em] uppercase text-fresa">Catálogo</span>
+      <h1 class="font-titulo font-normal text-3xl md:text-5xl leading-tight">Elige tus antojos</h1>
+    </div>
+
+    <!-- Filtros por linea -->
+    <div class="flex gap-2 md:gap-2.5 flex-wrap">
+      <button
+        type="button"
+        (click)="cambiarFiltro('todo')"
+        class="h-11 px-5 rounded-full text-[15px] font-semibold transition-colors"
+        [class.bg-fresa]="filtro() === 'todo'"
+        [class.text-crema]="filtro() === 'todo'"
+        [class.border]="filtro() !== 'todo'"
+        [class.border-borde]="filtro() !== 'todo'"
+      >
+        Todo
+      </button>
+      @for (vendedor of vendedores(); track vendedor.id) {
+        <button
+          type="button"
+          (click)="cambiarFiltro(vendedor.slug)"
+          class="h-11 px-5 rounded-full text-[15px] font-semibold transition-colors"
+          [class.bg-fresa]="filtro() === vendedor.slug"
+          [class.text-crema]="filtro() === vendedor.slug"
+          [class.border]="filtro() !== vendedor.slug"
+          [class.border-borde]="filtro() !== vendedor.slug"
+        >
+          {{ vendedor.nombre }}
+        </button>
+      }
+    </div>
+
+    <!-- Estados de carga / error -->
+    @if (cargando()) {
+      <p class="text-texto-secundario">Cargando catálogo...</p>
+    }
+    @if (error()) {
+      <p class="text-fresa">No se pudo cargar el catálogo. Intenta de nuevo en un momento.</p>
+    }
+
+    <!-- Grid de productos: 2 columnas en celular, hasta 4 en escritorio -->
+    @if (!cargando() && !error()) {
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        @for (producto of productosFiltrados(); track producto.id) {
+          <article class="flex flex-col gap-2 md:gap-3">
+
+            <!-- Foto (o color de la linea como respaldo, si todavia no hay foto) -->
+            @if (producto.fotoRuta) {
+              <img
+                [src]="producto.fotoRuta"
+                [alt]="producto.nombre"
+                class="h-[170px] md:h-[250px] w-full object-cover rounded-2xl"
+              />
+            } @else {
+              <div
+                class="h-[170px] md:h-[250px] rounded-2xl flex items-center justify-center text-center p-4 text-sm"
+                [style.background]="tintePara(producto.vendedorId).fondo"
+                [style.color]="tintePara(producto.vendedorId).texto"
+              >
+                Foto: {{ producto.nombre }}
+              </div>
+            }
+
+            <div class="flex items-baseline justify-between gap-2">
+              <span class="font-titulo text-lg md:text-xl">{{ producto.nombre }}</span>
+            </div>
+            <span class="text-sm text-texto-secundario">Desde ${{ precioDesde(producto) }}</span>
+
+            <span
+              class="self-start inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+              [style.background]="tintePara(producto.vendedorId).fondo"
+              [style.color]="tintePara(producto.vendedorId).texto"
+            >
+              {{ producto.vendedorNombre }}
+            </span>
+
+            <!-- Si hay mas de una presentacion, elegir cual antes de pedir -->
+            @if (producto.presentaciones.length > 1) {
+              <div class="flex gap-1.5 flex-wrap">
+                @for (presentacion of producto.presentaciones; track presentacion.id) {
+                  <button
+                    type="button"
+                    (click)="elegirPresentacion(producto.id, presentacion.id)"
+                    class="h-8 px-3 rounded-full text-xs border transition-colors"
+                    [class.border-fresa]="presentacionActual(producto).id === presentacion.id"
+                    [class.text-fresa]="presentacionActual(producto).id === presentacion.id"
+                    [class.border-borde]="presentacionActual(producto).id !== presentacion.id"
+                  >
+                    {{ presentacion.nombre }} · ${{ presentacion.precio.toFixed(2) }}
+                  </button>
+                }
+              </div>
+            }
+
+            <a
+              [href]="enlaceWhatsApp(producto)"
+              target="_blank"
+              rel="noopener"
+              class="mt-1 flex items-center justify-center gap-2 h-11 px-5 rounded-full bg-fresa text-crema text-sm font-semibold no-underline"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 2a10 10 0 0 0-8.5 15.2L2 22l4.9-1.5A10 10 0 1 0 12 2zm5.7 14.3c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-3.3-.8-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8s.7-2 .9-2.2c.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5.2.6.7 1.9.8 2 .1.2.1.3 0 .5-.1.2-.1.3-.3.5l-.4.5c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.1.5.1.7-.1.2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1l1.8.9c.2.1.4.2.5.3.1.2.1.9-.1 1.5z"/>
+              </svg>
+              Pedir por WhatsApp
+            </a>
+          </article>
+        }
+      </div>
+
+      @if (productosFiltrados().length === 0) {
+        <p class="text-texto-secundario">No hay productos en esta línea todavía.</p>
+      }
+    }
+
+  </main>
+</div>
