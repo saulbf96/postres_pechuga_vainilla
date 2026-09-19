@@ -18,6 +18,9 @@ public class Vendedor
 
     public ICollection<Producto> Productos {get;set;} = new List<Producto>();
 
+    // Navegacion inversa: todos los puntos de entrega de este vendedor
+    public ICollection<PuntoEntrega> PuntosEntrega { get; set; } = new List<PuntoEntrega>();
+
 
     
 
