@@ -27,6 +27,12 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 
+    // Swagger UI: pagina interactiva en /swagger que lee el documento OpenAPI de arriba.
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "Pechuga y Vainilla API v1");
+    });
+
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<PechugaVainillaDbContext>();
     DbSeeder.Seed(db);
