@@ -17,4 +17,9 @@ export class Header {
   protected salir(): void {
     this.auth.logout().subscribe(() => this.router.navigateByUrl('/'));
   }
+
+  protected tieneAccesoPanel(): boolean {
+    const roles = this.auth.usuario()?.roles ?? [];
+    return roles.includes('Administrador') || roles.includes('Vendedor');
+  }
 }

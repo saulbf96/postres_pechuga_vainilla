@@ -21,4 +21,12 @@ public interface IPedidoService
     Task<IReadOnlyList<Pedido>> ObtenerMisPedidosAsync(string usuarioId, CancellationToken cancellationToken);
 
     Task<Pedido?> ObtenerPedidoAsync(int id, string usuarioId, CancellationToken cancellationToken);
+
+    // Panel: vendedorId null = Administrador (ve todos); con valor = Vendedor (solo los suyos).
+    Task<IReadOnlyList<Pedido>> ObtenerPorVendedorAsync(int? vendedorId, CancellationToken cancellationToken);
+
+    // vendedorIdPermitido null = Administrador (puede cambiar cualquiera).
+    Task CambiarEstadoAsync(int id, int? vendedorIdPermitido, EstadoPedido nuevoEstado, CancellationToken cancellationToken);
+
+    Task CambiarEstadoPagoAsync(int id, int? vendedorIdPermitido, EstadoPago nuevoEstado, CancellationToken cancellationToken);
 }

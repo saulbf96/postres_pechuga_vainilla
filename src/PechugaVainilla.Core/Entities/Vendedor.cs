@@ -14,7 +14,11 @@ public class Vendedor
 
     public bool Activo { get; set; } = true;
 
-    //navegacion inversa  todos los productos  de este vendedor 
+    // Id del usuario de Identity dueño de este negocio (rol Vendedor). Nullable porque los
+    // vendedores sembrados de ejemplo no tienen cuenta hasta que se vincula una (Etapa 3).
+    public string? UsuarioId { get; set; }
+
+    //navegacion inversa  todos los productos  de este vendedor
 
     public ICollection<Producto> Productos {get;set;} = new List<Producto>();
 

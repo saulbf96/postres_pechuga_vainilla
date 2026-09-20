@@ -1,0 +1,184 @@
+<main class="px-4 md:px-16 py-6 md:py-10 flex flex-col gap-6">
+  <nav class="flex gap-4 text-sm">
+    <a routerLink="/panel/pedidos" class="text-cacao no-underline">Pedidos</a>
+    <a routerLink="/panel/productos" class="text-fresa font-semibold no-underline">Productos</a>
+    <a routerLink="/panel/puntos-entrega" class="text-cacao no-underline">Puntos de entrega</a>
+  </nav>
+
+  <div class="flex items-center justify-between max-w-3xl">
+    <h1 class="font-titulo text-3xl md:text-5xl">Panel · Productos</h1>
+    <button
+      type="button"
+      (click)="mostrarFormulario.set(!mostrarFormulario())"
+      class="h-10 px-4 rounded-full bg-fresa text-crema text-sm font-semibold"
+    >
+      {{ mostrarFormulario() ? 'Cancelar' : '+ Nuevo producto' }}
+    </button>
+  </div>
+
+  @if (error()) {
+    <p class="text-fresa text-sm">{{ error() }}</p>
+  }
+
+  @if (mostrarFormulario()) {
+    <section class="flex flex-col gap-3 border border-borde rounded-2xl p-4 max-w-xl">
+      <h2 class="font-titulo text-xl">Nuevo producto</h2>
+
+      <label class="flex flex-col gap-1 text-sm">
+        Vendedor
+        <select
+          [ngModel]="nuevoVendedorId()"
+          (ngModelChange)="nuevoVendedorId.set($event)"
+          class="h-11 px-4 rounded-xl border border-borde bg-white"
+        >
+          <option [ngValue]="null">Elige uno...</option>
+          @for (vendedor of vendedores(); track vendedor.id) {
+            <option [ngValue]="vendedor.id">{{ vendedor.nombre }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="flex flex-col gap-1 text-sm">
+        Nombre
+        <input
+          type="text"
+          [ngModel]="nuevoNombre()"
+          (ngModelChange)="nuevoNombre.set($event)"
+          class="h-11 px-4 rounded-xl border border-borde bg-white"
+        />
+      </label>
+
+      <label class="flex flex-col gap-1 text-sm">
+        Descripción
+        <input
+          type="text"
+          [ngModel]="nuevaDescripcion()"
+          (ngModelChange)="nuevaDescripcion.set($event)"
+          class="h-11 px-4 rounded-xl border border-borde bg-white"
+        />
+      </label>
+
+      <label class="flex flex-col gap-1 text-sm">
+        Máximo por día (opcional, para productos perecederos)
+        <input
+          type="number"
+          min="1"
+          [ngModel]="nuevoMaxPorDia()"
+          (ngModelChange)="nuevoMaxPorDia.set($event)"
+          class="h-11 px-4 rounded-xl border border-borde bg-white"
+        />
+      </label>
+
+      <div class="flex flex-col gap-2">
+        <span class="text-sm font-semibold">Presentaciones y precios</span>
+        @for (fila of nuevasPresentaciones(); track $index) {
+          <div class="flex gap-2 items-center">
+            <input
+              type="text"
+              placeholder="Chico, Pieza..."
+              [ngModel]="fila.nombre"
+              (ngModelChange)="actualizarFilaPresentacion($index, { nombre: $event })"
+              class="h-10 px-3 rounded-lg border border-borde bg-white flex-1"
+            />
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Precio"
+              [ngModel]="fila.precio"
+              (ngModelChange)="actualizarFilaPresentacion($index, { precio: $event })"
+              class="h-10 px-3 rounded-lg border border-borde bg-white w-28"
+            />
+            <button type="button" (click)="quitarFilaPresentacion($index)" class="text-fresa bg-transparent border-0 cursor-pointer">✕</button>
+          </div>
+        }
+        <button type="button" (click)="agregarFilaPresentacion()" class="self-start text-sm text-fresa bg-transparent border-0 cursor-pointer underline">
+          + Agregar presentación
+        </button>
+      </div>
+
+      <button
+        type="button"
+        (click)="crearProducto()"
+        class="h-11 rounded-full bg-fresa text-crema text-sm font-semibold"
+      >
+        Crear producto
+      </button>
+    </section>
+  }
+
+  @if (cargando()) {
+    <p class="text-texto-secundario">Cargando...</p>
+  } @else {
+    <div class="flex flex-col gap-4 max-w-3xl">
+      @for (producto of productos(); track producto.id) {
+        <article class="border border-borde rounded-2xl p-4 flex flex-col gap-2" [class.opacity-50]="!producto.activo">
+          <div class="flex items-center justify-between">
+            <span class="font-titulo text-xl">{{ producto.nombre }} <span class="text-sm text-texto-secundario font-texto">({{ producto.vendedorNombre }})</span></span>
+            <button
+              type="button"
+              (click)="cambiarActivo(producto)"
+              class="h-9 px-4 rounded-full text-xs font-semibold border"
+              [class.border-fresa]="true"
+              [class.text-fresa]="producto.activo"
+              [class.bg-fresa]="!producto.activo"
+              [class.text-crema]="!producto.activo"
+            >
+              {{ producto.activo ? 'Desactivar' : 'Reactivar' }}
+            </button>
+          </div>
+
+          @if (producto.descripcion) {
+            <p class="text-sm text-texto-secundario">{{ producto.descripcion }}</p>
+          }
+
+          <table class="text-sm">
+            <tbody>
+              @for (presentacion of producto.presentaciones; track presentacion.id) {
+                <tr [class.opacity-50]="!presentacion.activo">
+                  <td class="py-1 pr-4">{{ presentacion.nombre }}</td>
+                  <td class="py-1 pr-4">${{ presentacion.precio.toFixed(2) }}</td>
+                  <td class="py-1">
+                    <button
+                      type="button"
+                      (click)="cambiarActivaPresentacion(presentacion.id, presentacion.activo)"
+                      class="text-xs text-fresa bg-transparent border-0 cursor-pointer underline"
+                    >
+                      {{ presentacion.activo ? 'Desactivar' : 'Reactivar' }}
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+
+          <div class="flex gap-2 items-center pt-1">
+            <input
+              type="text"
+              placeholder="Nueva presentación"
+              [ngModel]="filaNuevaPresentacion(producto.id).nombre"
+              (ngModelChange)="actualizarNuevaPresentacion(producto.id, { nombre: $event })"
+              class="h-9 px-3 rounded-lg border border-borde bg-white text-sm flex-1"
+            />
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Precio"
+              [ngModel]="filaNuevaPresentacion(producto.id).precio"
+              (ngModelChange)="actualizarNuevaPresentacion(producto.id, { precio: $event })"
+              class="h-9 px-3 rounded-lg border border-borde bg-white text-sm w-24"
+            />
+            <button
+              type="button"
+              (click)="agregarPresentacion(producto)"
+              class="h-9 px-3 rounded-full border border-fresa text-fresa text-xs font-semibold"
+            >
+              Agregar
+            </button>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</main>

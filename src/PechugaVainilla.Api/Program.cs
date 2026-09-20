@@ -29,6 +29,7 @@ builder.Services.AddScoped<IVendedorService, VendedorService>();
 builder.Services.AddScoped<IProductoService, ProductoService>();
 builder.Services.AddScoped<IPuntoEntregaService, PuntoEntregaService>();
 builder.Services.AddScoped<IPedidoService, PedidoService>();
+builder.Services.AddScoped<IAccesoVendedorService, AccesoVendedorService>();
 
 // Identity: maneja el hash de contraseñas, bloqueo por intentos fallidos, roles, etc.
 builder.Services.AddIdentity<Usuario, IdentityRole>(options =>
@@ -90,6 +91,9 @@ if (app.Environment.IsDevelopment())
 
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     await RoleSeeder.SeedAsync(roleManager);
+
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Usuario>>();
+    await CuentasVendedorSeeder.SeedAsync(userManager, db);
 }
 
 app.UseHttpsRedirection();

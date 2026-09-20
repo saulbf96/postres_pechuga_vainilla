@@ -9,6 +9,10 @@
   </a>
 
   <nav class="flex items-center gap-3 md:gap-5 text-sm">
+    @if (tieneAccesoPanel()) {
+      <a routerLink="/panel/pedidos" class="text-cacao no-underline font-semibold">Panel</a>
+    }
+
     @if (auth.usuario()) {
       <a routerLink="/mis-pedidos" class="text-cacao no-underline">Mis pedidos</a>
     }

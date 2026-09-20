@@ -34,6 +34,12 @@ public class PechugaVainillaDbContext : IdentityDbContext<Usuario>
             entity.HasIndex(v => v.Slug).IsUnique(); // no puede haber dos vendedores con el mismo slug
             entity.Property(v => v.WhatsApp).HasMaxLength(20).IsRequired();
             entity.Property(v => v.Descripcion).HasMaxLength(500);
+
+            // Si se borra la cuenta de Identity, el Vendedor se queda (solo pierde el dueño).
+            entity.HasOne<Usuario>()
+                  .WithMany()
+                  .HasForeignKey(v => v.UsuarioId)
+                  .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Producto>(entity =>

@@ -1,0 +1,131 @@
+<main class="px-4 md:px-16 py-6 md:py-10 flex flex-col gap-6">
+  <nav class="flex gap-4 text-sm">
+    <a routerLink="/panel/pedidos" class="text-cacao no-underline">Pedidos</a>
+    <a routerLink="/panel/productos" class="text-cacao no-underline">Productos</a>
+    <a routerLink="/panel/puntos-entrega" class="text-fresa font-semibold no-underline">Puntos de entrega</a>
+  </nav>
+
+  <div class="flex items-center justify-between max-w-2xl">
+    <h1 class="font-titulo text-3xl md:text-5xl">Panel · Puntos de entrega</h1>
+    <button
+      type="button"
+      (click)="mostrarFormulario.set(!mostrarFormulario())"
+      class="h-10 px-4 rounded-full bg-fresa text-crema text-sm font-semibold"
+    >
+      {{ mostrarFormulario() ? 'Cancelar' : '+ Nuevo punto' }}
+    </button>
+  </div>
+
+  @if (error()) {
+    <p class="text-fresa text-sm">{{ error() }}</p>
+  }
+
+  @if (mostrarFormulario()) {
+    <section class="flex flex-col gap-3 border border-borde rounded-2xl p-4 max-w-xl">
+      <h2 class="font-titulo text-xl">Nuevo punto de entrega</h2>
+
+      <label class="flex flex-col gap-1 text-sm">
+        Vendedor
+        <select [ngModel]="nuevoVendedorId()" (ngModelChange)="nuevoVendedorId.set($event)" class="h-11 px-4 rounded-xl border border-borde bg-white">
+          <option [ngValue]="null">Elige uno...</option>
+          @for (vendedor of vendedores(); track vendedor.id) {
+            <option [ngValue]="vendedor.id">{{ vendedor.nombre }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="flex flex-col gap-1 text-sm">
+        Nombre
+        <input type="text" [ngModel]="nuevoNombre()" (ngModelChange)="nuevoNombre.set($event)" class="h-11 px-4 rounded-xl border border-borde bg-white" />
+      </label>
+
+      <label class="flex flex-col gap-1 text-sm">
+        Tipo
+        <select [ngModel]="nuevoTipo()" (ngModelChange)="nuevoTipo.set($event)" class="h-11 px-4 rounded-xl border border-borde bg-white">
+          @for (tipo of tipos; track tipo) {
+            <option [value]="tipo">{{ tipo }}</option>
+          }
+        </select>
+      </label>
+
+      <div class="flex flex-col gap-1 text-sm">
+        Días que atiende
+        <div class="flex gap-1.5 flex-wrap">
+          @for (dia of diasSemana; track dia) {
+            <button
+              type="button"
+              (click)="alternarDia(dia)"
+              class="h-9 px-3 rounded-full text-xs border"
+              [class.bg-fresa]="nuevosDias().has(dia)"
+              [class.text-crema]="nuevosDias().has(dia)"
+              [class.border-borde]="!nuevosDias().has(dia)"
+            >
+              {{ dia }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="flex gap-3">
+        <label class="flex flex-col gap-1 text-sm flex-1">
+          Hora inicio
+          <input type="time" [ngModel]="nuevaHoraInicio()" (ngModelChange)="nuevaHoraInicio.set($event)" class="h-11 px-4 rounded-xl border border-borde bg-white" />
+        </label>
+        <label class="flex flex-col gap-1 text-sm flex-1">
+          Hora fin
+          <input type="time" [ngModel]="nuevaHoraFin()" (ngModelChange)="nuevaHoraFin.set($event)" class="h-11 px-4 rounded-xl border border-borde bg-white" />
+        </label>
+      </div>
+
+      <div class="flex gap-3">
+        <label class="flex flex-col gap-1 text-sm flex-1">
+          Días de anticipación
+          <input type="number" min="0" [ngModel]="nuevosDiasAnticipacion()" (ngModelChange)="nuevosDiasAnticipacion.set($event)" class="h-11 px-4 rounded-xl border border-borde bg-white" />
+        </label>
+        <label class="flex flex-col gap-1 text-sm flex-1">
+          Hora límite de pedido
+          <input type="time" [ngModel]="nuevaHoraLimite()" (ngModelChange)="nuevaHoraLimite.set($event)" class="h-11 px-4 rounded-xl border border-borde bg-white" />
+        </label>
+      </div>
+
+      <label class="flex flex-col gap-1 text-sm">
+        Costo de envío
+        <input type="number" min="0" step="0.01" [ngModel]="nuevoCostoEnvio()" (ngModelChange)="nuevoCostoEnvio.set($event)" class="h-11 px-4 rounded-xl border border-borde bg-white" />
+      </label>
+
+      <button type="button" (click)="crear()" class="h-11 rounded-full bg-fresa text-crema text-sm font-semibold">
+        Crear punto de entrega
+      </button>
+    </section>
+  }
+
+  @if (cargando()) {
+    <p class="text-texto-secundario">Cargando...</p>
+  } @else {
+    <div class="flex flex-col gap-3 max-w-2xl">
+      @for (punto of puntos(); track punto.id) {
+        <article class="border border-borde rounded-2xl p-4 flex items-center justify-between gap-3" [class.opacity-50]="!punto.activo">
+          <div>
+            <span class="font-titulo text-lg">{{ punto.nombre }}</span>
+            <span class="text-sm text-texto-secundario"> ({{ punto.vendedorNombre }})</span>
+            <p class="text-sm text-texto-secundario">
+              {{ punto.tipo }} · {{ punto.diasSemana.join(', ') }} · {{ punto.horaInicio }}–{{ punto.horaFin }}
+              · envío ${{ punto.costoEnvio.toFixed(2) }}
+            </p>
+          </div>
+          <button
+            type="button"
+            (click)="cambiarActivo(punto)"
+            class="h-9 px-4 rounded-full text-xs font-semibold border shrink-0"
+            [class.text-fresa]="punto.activo"
+            [class.border-fresa]="true"
+            [class.bg-fresa]="!punto.activo"
+            [class.text-crema]="!punto.activo"
+          >
+            {{ punto.activo ? 'Desactivar' : 'Reactivar' }}
+          </button>
+        </article>
+      }
+    </div>
+  }
+</main>

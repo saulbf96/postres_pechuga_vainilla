@@ -144,6 +144,56 @@ public class PedidoService : IPedidoService
             .FirstOrDefaultAsync(p => p.Id == id && p.UsuarioId == usuarioId, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Pedido>> ObtenerPorVendedorAsync(int? vendedorId, CancellationToken cancellationToken)
+    {
+        var query = ConsultaConDetalles();
+
+        if (vendedorId.HasValue)
+        {
+            query = query.Where(p => p.VendedorId == vendedorId.Value);
+        }
+
+        return await query.OrderByDescending(p => p.CreadoEn).ToListAsync(cancellationToken);
+    }
+
+    public async Task CambiarEstadoAsync(int id, int? vendedorIdPermitido, EstadoPedido nuevoEstado, CancellationToken cancellationToken)
+    {
+        var pedido = await ObtenerConPermisoAsync(id, vendedorIdPermitido, cancellationToken);
+        pedido.Estado = nuevoEstado;
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task CambiarEstadoPagoAsync(int id, int? vendedorIdPermitido, EstadoPago nuevoEstado, CancellationToken cancellationToken)
+    {
+        var pedido = await ObtenerConPermisoAsync(id, vendedorIdPermitido, cancellationToken);
+
+        if (pedido.Pago is null)
+        {
+            throw new ReglaDeNegocioException("Este pedido no tiene un pago asociado.");
+        }
+
+        pedido.Pago.Estado = nuevoEstado;
+        if (nuevoEstado is EstadoPago.Pagado or EstadoPago.Cobrado)
+        {
+            pedido.Pago.PagadoEn = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task<Pedido> ObtenerConPermisoAsync(int id, int? vendedorIdPermitido, CancellationToken cancellationToken)
+    {
+        var pedido = await ConsultaConDetalles().FirstOrDefaultAsync(p => p.Id == id, cancellationToken)
+            ?? throw new ReglaDeNegocioException("El pedido no existe.");
+
+        if (vendedorIdPermitido.HasValue && pedido.VendedorId != vendedorIdPermitido.Value)
+        {
+            throw new ReglaDeNegocioException("No tienes permiso sobre este pedido.");
+        }
+
+        return pedido;
+    }
+
     private IQueryable<Pedido> ConsultaConDetalles() =>
         _context.Pedidos
             .Include(p => p.Vendedor)
