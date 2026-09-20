@@ -20,18 +20,19 @@ public interface IProductoService
     Task<IReadOnlyList<Producto>> ObtenerActivosAsync(int? vendedorId, CancellationToken cancellationToken);
 
     // Panel: todos (activos e inactivos), para poder reactivarlos.
-    Task<IReadOnlyList<Producto>> ObtenerTodosAsync(int? vendedorId, CancellationToken cancellationToken);
+    // vendedorIdsPermitidos null = Administrador (sin filtro). Lista = restringido a esos vendedores.
+    Task<IReadOnlyList<Producto>> ObtenerTodosAsync(IReadOnlyList<int>? vendedorIdsPermitidos, CancellationToken cancellationToken);
 
     Task<Producto> CrearAsync(NuevoProducto nuevo, CancellationToken cancellationToken);
 
-    Task ActualizarAsync(int id, int? vendedorIdPermitido, EdicionProducto edicion, CancellationToken cancellationToken);
+    Task ActualizarAsync(int id, IReadOnlyList<int>? vendedorIdsPermitidos, EdicionProducto edicion, CancellationToken cancellationToken);
 
-    Task CambiarActivoAsync(int id, int? vendedorIdPermitido, bool activo, CancellationToken cancellationToken);
+    Task CambiarActivoAsync(int id, IReadOnlyList<int>? vendedorIdsPermitidos, bool activo, CancellationToken cancellationToken);
 
     // Gestion de presentaciones (tamaños/precios) de un producto ya existente.
-    Task<Presentacion> AgregarPresentacionAsync(int productoId, int? vendedorIdPermitido, PresentacionInput input, CancellationToken cancellationToken);
+    Task<Presentacion> AgregarPresentacionAsync(int productoId, IReadOnlyList<int>? vendedorIdsPermitidos, PresentacionInput input, CancellationToken cancellationToken);
 
-    Task EditarPresentacionAsync(int presentacionId, int? vendedorIdPermitido, PresentacionInput input, CancellationToken cancellationToken);
+    Task EditarPresentacionAsync(int presentacionId, IReadOnlyList<int>? vendedorIdsPermitidos, PresentacionInput input, CancellationToken cancellationToken);
 
-    Task CambiarActivaPresentacionAsync(int presentacionId, int? vendedorIdPermitido, bool activo, CancellationToken cancellationToken);
+    Task CambiarActivaPresentacionAsync(int presentacionId, IReadOnlyList<int>? vendedorIdsPermitidos, bool activo, CancellationToken cancellationToken);
 }

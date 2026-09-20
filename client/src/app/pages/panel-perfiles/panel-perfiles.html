@@ -1,0 +1,152 @@
+<main class="px-4 md:px-16 py-6 md:py-10 flex flex-col gap-6">
+  <app-panel-nav activa="perfiles" />
+
+  <div class="flex items-center justify-between max-w-3xl">
+    <h1 class="font-titulo text-3xl md:text-5xl">Panel · Perfiles</h1>
+    <button
+      type="button"
+      (click)="mostrarFormulario.set(!mostrarFormulario())"
+      class="h-10 px-4 rounded-full bg-fresa text-crema text-sm font-semibold"
+    >
+      {{ mostrarFormulario() ? 'Cancelar' : '+ Nueva persona' }}
+    </button>
+  </div>
+
+  @if (error()) {
+    <p class="text-fresa text-sm">{{ error() }}</p>
+  }
+
+  @if (mostrarFormulario()) {
+    <section class="flex flex-col gap-3 border border-borde rounded-2xl p-4 max-w-xl">
+      <h2 class="font-titulo text-xl">Nueva persona</h2>
+
+      <label class="flex flex-col gap-1 text-sm">
+        Nombre
+        <input type="text" [ngModel]="nuevoNombre()" (ngModelChange)="nuevoNombre.set($event)" class="h-11 px-4 rounded-xl border border-borde bg-white" />
+      </label>
+
+      <label class="flex flex-col gap-1 text-sm">
+        Correo
+        <input type="email" [ngModel]="nuevoEmail()" (ngModelChange)="nuevoEmail.set($event)" class="h-11 px-4 rounded-xl border border-borde bg-white" />
+      </label>
+
+      <label class="flex flex-col gap-1 text-sm">
+        WhatsApp (opcional)
+        <input type="tel" [ngModel]="nuevoWhatsApp()" (ngModelChange)="nuevoWhatsApp.set($event)" class="h-11 px-4 rounded-xl border border-borde bg-white" />
+      </label>
+
+      <label class="flex flex-col gap-1 text-sm">
+        Contraseña temporal (que la cambie al entrar)
+        <input type="text" [ngModel]="nuevoPassword()" (ngModelChange)="nuevoPassword.set($event)" class="h-11 px-4 rounded-xl border border-borde bg-white" />
+      </label>
+
+      <label class="flex flex-col gap-1 text-sm">
+        Rol
+        <select [ngModel]="nuevoRol()" (ngModelChange)="nuevoRol.set($event)" class="h-11 px-4 rounded-xl border border-borde bg-white">
+          <option value="Vendedor">Vendedor (ayuda a entregar / administra su línea)</option>
+          <option value="Administrador">Administrador (ve y edita todo)</option>
+        </select>
+      </label>
+
+      @if (nuevoRol() === 'Vendedor') {
+        <div class="flex flex-col gap-2">
+          <span class="text-sm font-semibold">¿A qué línea(s) ayuda a entregar, y cuándo?</span>
+
+          @for (fila of nuevasAsignaciones(); track $index) {
+            <div class="flex flex-col gap-2 border border-borde rounded-xl p-3">
+              <div class="flex gap-2 items-center">
+                <select
+                  [ngModel]="fila.vendedorId"
+                  (ngModelChange)="actualizarFilaAsignacion($index, { vendedorId: $event })"
+                  class="h-9 px-3 rounded-lg border border-borde bg-white text-sm flex-1"
+                >
+                  <option [ngValue]="null">Elige vendedor...</option>
+                  @for (vendedor of vendedores(); track vendedor.id) {
+                    <option [ngValue]="vendedor.id">{{ vendedor.nombre }}</option>
+                  }
+                </select>
+                <button type="button" (click)="quitarFilaAsignacion($index)" class="text-fresa bg-transparent border-0 cursor-pointer">✕</button>
+              </div>
+
+              <div class="flex gap-1 flex-wrap">
+                @for (dia of diasSemana; track dia) {
+                  <button
+                    type="button"
+                    (click)="alternarDiaFila($index, dia)"
+                    class="h-8 px-2.5 rounded-full text-xs border"
+                    [class.bg-fresa]="fila.dias.has(dia)"
+                    [class.text-crema]="fila.dias.has(dia)"
+                    [class.border-borde]="!fila.dias.has(dia)"
+                  >
+                    {{ dia }}
+                  </button>
+                }
+              </div>
+
+              <div class="flex gap-2">
+                <input
+                  type="time"
+                  [ngModel]="fila.horaInicio"
+                  (ngModelChange)="actualizarFilaAsignacion($index, { horaInicio: $event })"
+                  class="h-9 px-3 rounded-lg border border-borde bg-white text-sm flex-1"
+                />
+                <input
+                  type="time"
+                  [ngModel]="fila.horaFin"
+                  (ngModelChange)="actualizarFilaAsignacion($index, { horaFin: $event })"
+                  class="h-9 px-3 rounded-lg border border-borde bg-white text-sm flex-1"
+                />
+              </div>
+            </div>
+          }
+
+          <button type="button" (click)="agregarFilaAsignacion()" class="self-start text-sm text-fresa bg-transparent border-0 cursor-pointer underline">
+            + Agregar línea que entrega
+          </button>
+        </div>
+      }
+
+      <button type="button" (click)="crearUsuario()" class="h-11 rounded-full bg-fresa text-crema text-sm font-semibold">
+        Crear persona
+      </button>
+    </section>
+  }
+
+  @if (cargando()) {
+    <p class="text-texto-secundario">Cargando...</p>
+  } @else {
+    <div class="flex flex-col gap-3 max-w-3xl">
+      @for (perfil of perfiles(); track perfil.id) {
+        <article class="border border-borde rounded-2xl p-4 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="font-titulo text-lg">{{ perfil.nombre }}</span>
+            <span class="text-xs text-texto-secundario">{{ perfil.roles.join(', ') }}</span>
+          </div>
+          <span class="text-sm text-texto-secundario">
+            {{ perfil.email }}
+            @if (perfil.whatsApp) {
+              · {{ perfil.whatsApp }}
+            }
+          </span>
+
+          @if (perfil.asignaciones.length > 0) {
+            <div class="flex flex-col gap-1 pt-1">
+              @for (asignacion of perfil.asignaciones; track asignacion.id) {
+                <div class="flex items-center justify-between text-sm" [class.opacity-50]="!asignacion.activo">
+                  <span>{{ asignacion.vendedorNombre }} · {{ asignacion.diasSemana.join(', ') }} · {{ asignacion.horaInicio }}–{{ asignacion.horaFin }}</span>
+                  <button
+                    type="button"
+                    (click)="cambiarActivaAsignacion(asignacion.id, asignacion.activo)"
+                    class="text-xs text-fresa bg-transparent border-0 cursor-pointer underline"
+                  >
+                    {{ asignacion.activo ? 'Quitar' : 'Reactivar' }}
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </article>
+      }
+    </div>
+  }
+</main>

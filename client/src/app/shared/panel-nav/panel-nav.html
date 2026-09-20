@@ -1,0 +1,16 @@
+<nav class="flex gap-4 text-sm">
+  <a routerLink="/panel/pedidos" class="no-underline" [class.text-fresa]="activa() === 'pedidos'" [class.font-semibold]="activa() === 'pedidos'" [class.text-cacao]="activa() !== 'pedidos'">
+    Pedidos
+  </a>
+  <a routerLink="/panel/productos" class="no-underline" [class.text-fresa]="activa() === 'productos'" [class.font-semibold]="activa() === 'productos'" [class.text-cacao]="activa() !== 'productos'">
+    Productos
+  </a>
+  <a routerLink="/panel/puntos-entrega" class="no-underline" [class.text-fresa]="activa() === 'puntos-entrega'" [class.font-semibold]="activa() === 'puntos-entrega'" [class.text-cacao]="activa() !== 'puntos-entrega'">
+    Puntos de entrega
+  </a>
+  @if (esAdmin()) {
+    <a routerLink="/panel/perfiles" class="no-underline" [class.text-fresa]="activa() === 'perfiles'" [class.font-semibold]="activa() === 'perfiles'" [class.text-cacao]="activa() !== 'perfiles'">
+      Perfiles
+    </a>
+  }
+</nav>

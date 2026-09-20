@@ -22,6 +22,7 @@ public class PechugaVainillaDbContext : IdentityDbContext<Usuario>
     public DbSet<Pedido> Pedidos => Set<Pedido>();
     public DbSet<PedidoDetalle> PedidoDetalles => Set<PedidoDetalle>();
     public DbSet<Pago> Pagos => Set<Pago>();
+    public DbSet<AsignacionVendedor> AsignacionesVendedor => Set<AsignacionVendedor>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -128,6 +129,21 @@ public class PechugaVainillaDbContext : IdentityDbContext<Usuario>
             entity.HasOne(pa => pa.Pedido)
                   .WithOne(p => p.Pago)
                   .HasForeignKey<Pago>(pa => pa.PedidoId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AsignacionVendedor>(entity =>
+        {
+            entity.Property(a => a.DiasSemana).HasConversion<string>().HasMaxLength(100);
+
+            entity.HasOne(a => a.Vendedor)
+                  .WithMany()
+                  .HasForeignKey(a => a.VendedorId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne<Usuario>()
+                  .WithMany()
+                  .HasForeignKey(a => a.UsuarioId)
                   .OnDelete(DeleteBehavior.Cascade);
         });
     }

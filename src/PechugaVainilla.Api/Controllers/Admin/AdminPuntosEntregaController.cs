@@ -28,8 +28,8 @@ public class AdminPuntosEntregaController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<AdminPuntoEntregaDto>>> Get(CancellationToken cancellationToken)
     {
-        var vendedorId = await ResolverVendedorIdAsync(cancellationToken);
-        var puntos = await _puntoEntregaService.ObtenerTodosAsync(vendedorId, cancellationToken);
+        var vendedorIds = await ResolverVendedorIdsAsync(cancellationToken);
+        var puntos = await _puntoEntregaService.ObtenerTodosAsync(vendedorIds, cancellationToken);
         return Ok(puntos.Select(MapearDto).ToList());
     }
 
@@ -68,8 +68,8 @@ public class AdminPuntosEntregaController : ControllerBase
 
         try
         {
-            var vendedorIdPermitido = await ResolverVendedorIdAsync(cancellationToken);
-            await _puntoEntregaService.ActualizarAsync(id, vendedorIdPermitido, datos, cancellationToken);
+            var vendedorIds = await ResolverVendedorIdsAsync(cancellationToken);
+            await _puntoEntregaService.ActualizarAsync(id, vendedorIds, datos, cancellationToken);
             return NoContent();
         }
         catch (ReglaDeNegocioException ex)
@@ -83,8 +83,8 @@ public class AdminPuntosEntregaController : ControllerBase
     {
         try
         {
-            var vendedorIdPermitido = await ResolverVendedorIdAsync(cancellationToken);
-            await _puntoEntregaService.CambiarActivoAsync(id, vendedorIdPermitido, request.Activo, cancellationToken);
+            var vendedorIds = await ResolverVendedorIdsAsync(cancellationToken);
+            await _puntoEntregaService.CambiarActivoAsync(id, vendedorIds, request.Activo, cancellationToken);
             return NoContent();
         }
         catch (ReglaDeNegocioException ex)
@@ -93,7 +93,7 @@ public class AdminPuntosEntregaController : ControllerBase
         }
     }
 
-    private async Task<int?> ResolverVendedorIdAsync(CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<int>?> ResolverVendedorIdsAsync(CancellationToken cancellationToken)
     {
         if (User.IsInRole("Administrador"))
         {
@@ -101,7 +101,7 @@ public class AdminPuntosEntregaController : ControllerBase
         }
 
         var usuarioId = _userManager.GetUserId(User)!;
-        return await _accesoVendedorService.ObtenerVendedorIdAsync(usuarioId, cancellationToken);
+        return await _accesoVendedorService.ObtenerVendedorIdsAsync(usuarioId, cancellationToken);
     }
 
     private async Task<int?> ResolverVendedorIdParaEscrituraAsync(int? vendedorIdSolicitado, CancellationToken cancellationToken)
@@ -112,7 +112,14 @@ public class AdminPuntosEntregaController : ControllerBase
         }
 
         var usuarioId = _userManager.GetUserId(User)!;
-        return await _accesoVendedorService.ObtenerVendedorIdAsync(usuarioId, cancellationToken);
+        var permitidos = await _accesoVendedorService.ObtenerVendedorIdsAsync(usuarioId, cancellationToken);
+
+        if (vendedorIdSolicitado.HasValue && permitidos.Contains(vendedorIdSolicitado.Value))
+        {
+            return vendedorIdSolicitado;
+        }
+
+        return permitidos.Count == 1 ? permitidos[0] : null;
     }
 
     private static bool TryMapearDatos(GuardarPuntoEntregaRequest request, out DatosPuntoEntrega datos, out string? error)

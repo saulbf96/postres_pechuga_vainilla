@@ -13,11 +13,18 @@ public class AccesoVendedorService : IAccesoVendedorService
         _context = context;
     }
 
-    public async Task<int?> ObtenerVendedorIdAsync(string usuarioId, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<int>> ObtenerVendedorIdsAsync(string usuarioId, CancellationToken cancellationToken)
     {
-        return await _context.Vendedores
+        // Acceso por ser dueño del negocio (Vendedor.UsuarioId)...
+        var comoDueño = _context.Vendedores
             .Where(v => v.UsuarioId == usuarioId)
-            .Select(v => (int?)v.Id)
-            .FirstOrDefaultAsync(cancellationToken);
+            .Select(v => v.Id);
+
+        // ...mas acceso por estar asignado a entregar ahi (empleado, activo).
+        var comoAsignado = _context.AsignacionesVendedor
+            .Where(a => a.UsuarioId == usuarioId && a.Activo)
+            .Select(a => a.VendedorId);
+
+        return await comoDueño.Union(comoAsignado).ToListAsync(cancellationToken);
     }
 }

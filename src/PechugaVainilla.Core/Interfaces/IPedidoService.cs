@@ -22,11 +22,13 @@ public interface IPedidoService
 
     Task<Pedido?> ObtenerPedidoAsync(int id, string usuarioId, CancellationToken cancellationToken);
 
-    // Panel: vendedorId null = Administrador (ve todos); con valor = Vendedor (solo los suyos).
-    Task<IReadOnlyList<Pedido>> ObtenerPorVendedorAsync(int? vendedorId, CancellationToken cancellationToken);
+    // Panel: null = Administrador (ve todos); con lista = solo esos vendedores.
+    Task<IReadOnlyList<Pedido>> ObtenerPorVendedorAsync(IReadOnlyList<int>? vendedorIdsPermitidos, CancellationToken cancellationToken);
 
-    // vendedorIdPermitido null = Administrador (puede cambiar cualquiera).
-    Task CambiarEstadoAsync(int id, int? vendedorIdPermitido, EstadoPedido nuevoEstado, CancellationToken cancellationToken);
+    Task CambiarEstadoAsync(int id, IReadOnlyList<int>? vendedorIdsPermitidos, EstadoPedido nuevoEstado, CancellationToken cancellationToken);
 
-    Task CambiarEstadoPagoAsync(int id, int? vendedorIdPermitido, EstadoPago nuevoEstado, CancellationToken cancellationToken);
+    Task CambiarEstadoPagoAsync(int id, IReadOnlyList<int>? vendedorIdsPermitidos, EstadoPago nuevoEstado, CancellationToken cancellationToken);
+
+    // Cuenta pedidos "Nuevo" visibles para este usuario - para el avisito en el panel.
+    Task<int> ContarNuevosAsync(IReadOnlyList<int>? vendedorIdsPermitidos, CancellationToken cancellationToken);
 }

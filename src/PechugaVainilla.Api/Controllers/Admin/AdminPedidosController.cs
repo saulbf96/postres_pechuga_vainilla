@@ -27,9 +27,18 @@ public class AdminPedidosController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<AdminPedidoDto>>> Get(CancellationToken cancellationToken)
     {
-        var vendedorId = await ResolverVendedorIdAsync(cancellationToken);
-        var pedidos = await _pedidoService.ObtenerPorVendedorAsync(vendedorId, cancellationToken);
+        var vendedorIds = await ResolverVendedorIdsAsync(cancellationToken);
+        var pedidos = await _pedidoService.ObtenerPorVendedorAsync(vendedorIds, cancellationToken);
         return Ok(pedidos.Select(MapearDto).ToList());
+    }
+
+    // El "avisito" dentro del panel: cuantos pedidos Nuevo puede ver este usuario ahora mismo.
+    [HttpGet("nuevos/contar")]
+    public async Task<ActionResult<int>> ContarNuevos(CancellationToken cancellationToken)
+    {
+        var vendedorIds = await ResolverVendedorIdsAsync(cancellationToken);
+        var cantidad = await _pedidoService.ContarNuevosAsync(vendedorIds, cancellationToken);
+        return Ok(cantidad);
     }
 
     [HttpPatch("{id:int}/estado")]
@@ -37,8 +46,8 @@ public class AdminPedidosController : ControllerBase
     {
         try
         {
-            var vendedorIdPermitido = await ResolverVendedorIdAsync(cancellationToken);
-            await _pedidoService.CambiarEstadoAsync(id, vendedorIdPermitido, request.Estado, cancellationToken);
+            var vendedorIds = await ResolverVendedorIdsAsync(cancellationToken);
+            await _pedidoService.CambiarEstadoAsync(id, vendedorIds, request.Estado, cancellationToken);
             return NoContent();
         }
         catch (ReglaDeNegocioException ex)
@@ -52,8 +61,8 @@ public class AdminPedidosController : ControllerBase
     {
         try
         {
-            var vendedorIdPermitido = await ResolverVendedorIdAsync(cancellationToken);
-            await _pedidoService.CambiarEstadoPagoAsync(id, vendedorIdPermitido, request.Estado, cancellationToken);
+            var vendedorIds = await ResolverVendedorIdsAsync(cancellationToken);
+            await _pedidoService.CambiarEstadoPagoAsync(id, vendedorIds, request.Estado, cancellationToken);
             return NoContent();
         }
         catch (ReglaDeNegocioException ex)
@@ -62,7 +71,7 @@ public class AdminPedidosController : ControllerBase
         }
     }
 
-    private async Task<int?> ResolverVendedorIdAsync(CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<int>?> ResolverVendedorIdsAsync(CancellationToken cancellationToken)
     {
         if (User.IsInRole("Administrador"))
         {
@@ -70,7 +79,7 @@ public class AdminPedidosController : ControllerBase
         }
 
         var usuarioId = _userManager.GetUserId(User)!;
-        return await _accesoVendedorService.ObtenerVendedorIdAsync(usuarioId, cancellationToken);
+        return await _accesoVendedorService.ObtenerVendedorIdsAsync(usuarioId, cancellationToken);
     }
 
     private static AdminPedidoDto MapearDto(Pedido pedido) => new(

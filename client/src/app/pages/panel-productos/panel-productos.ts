@@ -1,8 +1,8 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { PanelService } from '../../core/services/panel';
 import { CatalogoService } from '../../core/services/catalogo';
+import { PanelNav } from '../../shared/panel-nav/panel-nav';
 import type { AdminProductoDto } from '../../core/models/panel.model';
 import type { VendedorDto } from '../../core/models/catalogo.model';
 
@@ -12,7 +12,7 @@ interface FilaPresentacion {
 }
 
 @Component({
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, PanelNav],
   selector: 'app-panel-productos',
   styleUrl: './panel-productos.css',
   templateUrl: './panel-productos.html',

@@ -4,9 +4,13 @@ import type {
   AdminPedidoDto,
   AdminProductoDto,
   AdminPuntoEntregaDto,
+  AsignacionDto,
   CrearProductoRequest,
+  CrearUsuarioRequest,
   EditarProductoRequest,
   GuardarPuntoEntregaRequest,
+  NuevaAsignacionRequest,
+  PerfilDto,
   PresentacionAdminDto,
   PresentacionRequest,
 } from '../models/panel.model';
@@ -72,5 +76,26 @@ export class PanelService {
 
   cambiarEstadoPago(id: number, estado: string) {
     return this.http.patch<void>(`/api/v1/admin/pedidos/${id}/pago`, { estado });
+  }
+
+  contarPedidosNuevos() {
+    return this.http.get<number>('/api/v1/admin/pedidos/nuevos/contar');
+  }
+
+  // Perfiles (solo Administrador)
+  obtenerPerfiles() {
+    return this.http.get<PerfilDto[]>('/api/v1/admin/perfiles');
+  }
+
+  crearUsuario(request: CrearUsuarioRequest) {
+    return this.http.post<{ id: string }>('/api/v1/admin/perfiles', request);
+  }
+
+  agregarAsignacion(usuarioId: string, request: NuevaAsignacionRequest) {
+    return this.http.post<AsignacionDto>(`/api/v1/admin/perfiles/${usuarioId}/asignaciones`, request);
+  }
+
+  cambiarActivaAsignacion(asignacionId: number, activo: boolean) {
+    return this.http.patch<void>(`/api/v1/admin/perfiles/asignaciones/${asignacionId}/activo`, { activo });
   }
 }

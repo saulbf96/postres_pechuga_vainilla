@@ -144,28 +144,28 @@ public class PedidoService : IPedidoService
             .FirstOrDefaultAsync(p => p.Id == id && p.UsuarioId == usuarioId, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Pedido>> ObtenerPorVendedorAsync(int? vendedorId, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<Pedido>> ObtenerPorVendedorAsync(IReadOnlyList<int>? vendedorIdsPermitidos, CancellationToken cancellationToken)
     {
         var query = ConsultaConDetalles();
 
-        if (vendedorId.HasValue)
+        if (vendedorIdsPermitidos is not null)
         {
-            query = query.Where(p => p.VendedorId == vendedorId.Value);
+            query = query.Where(p => vendedorIdsPermitidos.Contains(p.VendedorId));
         }
 
         return await query.OrderByDescending(p => p.CreadoEn).ToListAsync(cancellationToken);
     }
 
-    public async Task CambiarEstadoAsync(int id, int? vendedorIdPermitido, EstadoPedido nuevoEstado, CancellationToken cancellationToken)
+    public async Task CambiarEstadoAsync(int id, IReadOnlyList<int>? vendedorIdsPermitidos, EstadoPedido nuevoEstado, CancellationToken cancellationToken)
     {
-        var pedido = await ObtenerConPermisoAsync(id, vendedorIdPermitido, cancellationToken);
+        var pedido = await ObtenerConPermisoAsync(id, vendedorIdsPermitidos, cancellationToken);
         pedido.Estado = nuevoEstado;
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task CambiarEstadoPagoAsync(int id, int? vendedorIdPermitido, EstadoPago nuevoEstado, CancellationToken cancellationToken)
+    public async Task CambiarEstadoPagoAsync(int id, IReadOnlyList<int>? vendedorIdsPermitidos, EstadoPago nuevoEstado, CancellationToken cancellationToken)
     {
-        var pedido = await ObtenerConPermisoAsync(id, vendedorIdPermitido, cancellationToken);
+        var pedido = await ObtenerConPermisoAsync(id, vendedorIdsPermitidos, cancellationToken);
 
         if (pedido.Pago is null)
         {
@@ -181,12 +181,24 @@ public class PedidoService : IPedidoService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task<Pedido> ObtenerConPermisoAsync(int id, int? vendedorIdPermitido, CancellationToken cancellationToken)
+    public async Task<int> ContarNuevosAsync(IReadOnlyList<int>? vendedorIdsPermitidos, CancellationToken cancellationToken)
+    {
+        var query = _context.Pedidos.Where(p => p.Estado == EstadoPedido.Nuevo);
+
+        if (vendedorIdsPermitidos is not null)
+        {
+            query = query.Where(p => vendedorIdsPermitidos.Contains(p.VendedorId));
+        }
+
+        return await query.CountAsync(cancellationToken);
+    }
+
+    private async Task<Pedido> ObtenerConPermisoAsync(int id, IReadOnlyList<int>? vendedorIdsPermitidos, CancellationToken cancellationToken)
     {
         var pedido = await ConsultaConDetalles().FirstOrDefaultAsync(p => p.Id == id, cancellationToken)
             ?? throw new ReglaDeNegocioException("El pedido no existe.");
 
-        if (vendedorIdPermitido.HasValue && pedido.VendedorId != vendedorIdPermitido.Value)
+        if (vendedorIdsPermitidos is not null && !vendedorIdsPermitidos.Contains(pedido.VendedorId))
         {
             throw new ReglaDeNegocioException("No tienes permiso sobre este pedido.");
         }

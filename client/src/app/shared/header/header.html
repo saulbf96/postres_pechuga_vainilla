@@ -10,7 +10,14 @@
 
   <nav class="flex items-center gap-3 md:gap-5 text-sm">
     @if (tieneAccesoPanel()) {
-      <a routerLink="/panel/pedidos" class="text-cacao no-underline font-semibold">Panel</a>
+      <a routerLink="/panel/pedidos" class="relative flex items-center gap-1 text-cacao no-underline font-semibold">
+        Panel
+        @if (pedidosNuevos() > 0) {
+          <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-fresa text-crema text-[11px] font-semibold">
+            {{ pedidosNuevos() }}
+          </span>
+        }
+      </a>
     }
 
     @if (auth.usuario()) {

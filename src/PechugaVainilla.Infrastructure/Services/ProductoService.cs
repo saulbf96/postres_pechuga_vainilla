@@ -30,16 +30,16 @@ public class ProductoService : IProductoService
         return await query.OrderBy(p => p.Nombre).ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Producto>> ObtenerTodosAsync(int? vendedorId, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<Producto>> ObtenerTodosAsync(IReadOnlyList<int>? vendedorIdsPermitidos, CancellationToken cancellationToken)
     {
         var query = _context.Productos
             .Include(p => p.Vendedor)
             .Include(p => p.Presentaciones)
             .AsQueryable();
 
-        if (vendedorId.HasValue)
+        if (vendedorIdsPermitidos is not null)
         {
-            query = query.Where(p => p.VendedorId == vendedorId.Value);
+            query = query.Where(p => vendedorIdsPermitidos.Contains(p.VendedorId));
         }
 
         return await query.OrderBy(p => p.Nombre).ToListAsync(cancellationToken);
@@ -75,9 +75,9 @@ public class ProductoService : IProductoService
         return producto;
     }
 
-    public async Task ActualizarAsync(int id, int? vendedorIdPermitido, EdicionProducto edicion, CancellationToken cancellationToken)
+    public async Task ActualizarAsync(int id, IReadOnlyList<int>? vendedorIdsPermitidos, EdicionProducto edicion, CancellationToken cancellationToken)
     {
-        var producto = await ObtenerConPermisoAsync(id, vendedorIdPermitido, cancellationToken);
+        var producto = await ObtenerConPermisoAsync(id, vendedorIdsPermitidos, cancellationToken);
 
         producto.Nombre = edicion.Nombre;
         producto.Descripcion = edicion.Descripcion;
@@ -87,16 +87,16 @@ public class ProductoService : IProductoService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task CambiarActivoAsync(int id, int? vendedorIdPermitido, bool activo, CancellationToken cancellationToken)
+    public async Task CambiarActivoAsync(int id, IReadOnlyList<int>? vendedorIdsPermitidos, bool activo, CancellationToken cancellationToken)
     {
-        var producto = await ObtenerConPermisoAsync(id, vendedorIdPermitido, cancellationToken);
+        var producto = await ObtenerConPermisoAsync(id, vendedorIdsPermitidos, cancellationToken);
         producto.Activo = activo;
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<Presentacion> AgregarPresentacionAsync(int productoId, int? vendedorIdPermitido, PresentacionInput input, CancellationToken cancellationToken)
+    public async Task<Presentacion> AgregarPresentacionAsync(int productoId, IReadOnlyList<int>? vendedorIdsPermitidos, PresentacionInput input, CancellationToken cancellationToken)
     {
-        var producto = await ObtenerConPermisoAsync(productoId, vendedorIdPermitido, cancellationToken);
+        var producto = await ObtenerConPermisoAsync(productoId, vendedorIdsPermitidos, cancellationToken);
 
         var presentacion = new Presentacion { Producto = producto, Nombre = input.Nombre, Precio = input.Precio };
         producto.Presentaciones.Add(presentacion);
@@ -105,30 +105,30 @@ public class ProductoService : IProductoService
         return presentacion;
     }
 
-    public async Task EditarPresentacionAsync(int presentacionId, int? vendedorIdPermitido, PresentacionInput input, CancellationToken cancellationToken)
+    public async Task EditarPresentacionAsync(int presentacionId, IReadOnlyList<int>? vendedorIdsPermitidos, PresentacionInput input, CancellationToken cancellationToken)
     {
-        var presentacion = await ObtenerPresentacionConPermisoAsync(presentacionId, vendedorIdPermitido, cancellationToken);
+        var presentacion = await ObtenerPresentacionConPermisoAsync(presentacionId, vendedorIdsPermitidos, cancellationToken);
         presentacion.Nombre = input.Nombre;
         presentacion.Precio = input.Precio;
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task CambiarActivaPresentacionAsync(int presentacionId, int? vendedorIdPermitido, bool activo, CancellationToken cancellationToken)
+    public async Task CambiarActivaPresentacionAsync(int presentacionId, IReadOnlyList<int>? vendedorIdsPermitidos, bool activo, CancellationToken cancellationToken)
     {
-        var presentacion = await ObtenerPresentacionConPermisoAsync(presentacionId, vendedorIdPermitido, cancellationToken);
+        var presentacion = await ObtenerPresentacionConPermisoAsync(presentacionId, vendedorIdsPermitidos, cancellationToken);
         presentacion.Activo = activo;
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task<Producto> ObtenerConPermisoAsync(int id, int? vendedorIdPermitido, CancellationToken cancellationToken)
+    private async Task<Producto> ObtenerConPermisoAsync(int id, IReadOnlyList<int>? vendedorIdsPermitidos, CancellationToken cancellationToken)
     {
         var producto = await _context.Productos
             .Include(p => p.Presentaciones)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken)
             ?? throw new ReglaDeNegocioException("El producto no existe.");
 
-        // Un Vendedor (no Administrador) solo puede tocar sus propios productos.
-        if (vendedorIdPermitido.HasValue && producto.VendedorId != vendedorIdPermitido.Value)
+        // Un Vendedor (no Administrador) solo puede tocar productos de sus vendedores asignados.
+        if (vendedorIdsPermitidos is not null && !vendedorIdsPermitidos.Contains(producto.VendedorId))
         {
             throw new ReglaDeNegocioException("No tienes permiso sobre este producto.");
         }
@@ -136,14 +136,14 @@ public class ProductoService : IProductoService
         return producto;
     }
 
-    private async Task<Presentacion> ObtenerPresentacionConPermisoAsync(int presentacionId, int? vendedorIdPermitido, CancellationToken cancellationToken)
+    private async Task<Presentacion> ObtenerPresentacionConPermisoAsync(int presentacionId, IReadOnlyList<int>? vendedorIdsPermitidos, CancellationToken cancellationToken)
     {
         var presentacion = await _context.Presentaciones
             .Include(pr => pr.Producto)
             .FirstOrDefaultAsync(pr => pr.Id == presentacionId, cancellationToken)
             ?? throw new ReglaDeNegocioException("La presentacion no existe.");
 
-        if (vendedorIdPermitido.HasValue && presentacion.Producto.VendedorId != vendedorIdPermitido.Value)
+        if (vendedorIdsPermitidos is not null && !vendedorIdsPermitidos.Contains(presentacion.Producto.VendedorId))
         {
             throw new ReglaDeNegocioException("No tienes permiso sobre esta presentacion.");
         }

@@ -85,3 +85,38 @@ export interface AdminPedidoDto {
 export const ESTADOS_PEDIDO = ['Nuevo', 'Preparando', 'Listo', 'Entregado', 'Cancelado'] as const;
 export const ESTADOS_PAGO = ['Pendiente', 'Pagado', 'PorConfirmar', 'PorCobrar', 'Cobrado'] as const;
 export const DIAS_SEMANA = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'] as const;
+
+export interface AsignacionDto {
+  id: number;
+  vendedorId: number;
+  vendedorNombre: string;
+  diasSemana: string[];
+  horaInicio: string;
+  horaFin: string;
+  activo: boolean;
+}
+
+export interface PerfilDto {
+  id: string;
+  nombre: string;
+  email: string;
+  whatsApp: string | null;
+  roles: string[];
+  asignaciones: AsignacionDto[];
+}
+
+export interface NuevaAsignacionRequest {
+  vendedorId: number;
+  diasSemana: string[];
+  horaInicio: string;
+  horaFin: string;
+}
+
+export interface CrearUsuarioRequest {
+  nombre: string;
+  email: string;
+  whatsApp: string | null;
+  password: string;
+  rol: 'Administrador' | 'Vendedor';
+  asignaciones: NuevaAsignacionRequest[];
+}

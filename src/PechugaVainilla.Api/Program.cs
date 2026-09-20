@@ -30,6 +30,7 @@ builder.Services.AddScoped<IProductoService, ProductoService>();
 builder.Services.AddScoped<IPuntoEntregaService, PuntoEntregaService>();
 builder.Services.AddScoped<IPedidoService, PedidoService>();
 builder.Services.AddScoped<IAccesoVendedorService, AccesoVendedorService>();
+builder.Services.AddScoped<IPerfilesService, PerfilesService>();
 
 // Identity: maneja el hash de contraseñas, bloqueo por intentos fallidos, roles, etc.
 builder.Services.AddIdentity<Usuario, IdentityRole>(options =>

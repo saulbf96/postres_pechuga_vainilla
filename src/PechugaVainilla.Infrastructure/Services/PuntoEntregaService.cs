@@ -26,13 +26,13 @@ public class PuntoEntregaService : IPuntoEntregaService
         return await query.OrderBy(pe => pe.Nombre).ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<PuntoEntrega>> ObtenerTodosAsync(int? vendedorId, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<PuntoEntrega>> ObtenerTodosAsync(IReadOnlyList<int>? vendedorIdsPermitidos, CancellationToken cancellationToken)
     {
         var query = _context.PuntosEntrega.Include(pe => pe.Vendedor).AsQueryable();
 
-        if (vendedorId.HasValue)
+        if (vendedorIdsPermitidos is not null)
         {
-            query = query.Where(pe => pe.VendedorId == vendedorId.Value);
+            query = query.Where(pe => vendedorIdsPermitidos.Contains(pe.VendedorId));
         }
 
         return await query.OrderBy(pe => pe.Nombre).ToListAsync(cancellationToken);
@@ -61,9 +61,9 @@ public class PuntoEntregaService : IPuntoEntregaService
         return punto;
     }
 
-    public async Task ActualizarAsync(int id, int? vendedorIdPermitido, DatosPuntoEntrega datos, CancellationToken cancellationToken)
+    public async Task ActualizarAsync(int id, IReadOnlyList<int>? vendedorIdsPermitidos, DatosPuntoEntrega datos, CancellationToken cancellationToken)
     {
-        var punto = await ObtenerConPermisoAsync(id, vendedorIdPermitido, cancellationToken);
+        var punto = await ObtenerConPermisoAsync(id, vendedorIdsPermitidos, cancellationToken);
 
         punto.Nombre = datos.Nombre;
         punto.Tipo = datos.Tipo;
@@ -77,19 +77,19 @@ public class PuntoEntregaService : IPuntoEntregaService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task CambiarActivoAsync(int id, int? vendedorIdPermitido, bool activo, CancellationToken cancellationToken)
+    public async Task CambiarActivoAsync(int id, IReadOnlyList<int>? vendedorIdsPermitidos, bool activo, CancellationToken cancellationToken)
     {
-        var punto = await ObtenerConPermisoAsync(id, vendedorIdPermitido, cancellationToken);
+        var punto = await ObtenerConPermisoAsync(id, vendedorIdsPermitidos, cancellationToken);
         punto.Activo = activo;
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task<PuntoEntrega> ObtenerConPermisoAsync(int id, int? vendedorIdPermitido, CancellationToken cancellationToken)
+    private async Task<PuntoEntrega> ObtenerConPermisoAsync(int id, IReadOnlyList<int>? vendedorIdsPermitidos, CancellationToken cancellationToken)
     {
         var punto = await _context.PuntosEntrega.FirstOrDefaultAsync(pe => pe.Id == id, cancellationToken)
             ?? throw new ReglaDeNegocioException("El punto de entrega no existe.");
 
-        if (vendedorIdPermitido.HasValue && punto.VendedorId != vendedorIdPermitido.Value)
+        if (vendedorIdsPermitidos is not null && !vendedorIdsPermitidos.Contains(punto.VendedorId))
         {
             throw new ReglaDeNegocioException("No tienes permiso sobre este punto de entrega.");
         }

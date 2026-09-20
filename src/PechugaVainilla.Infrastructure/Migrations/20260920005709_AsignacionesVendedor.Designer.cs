@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PechugaVainilla.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using PechugaVainilla.Infrastructure.Data;
 namespace PechugaVainilla.Infrastructure.Migrations
 {
     [DbContext(typeof(PechugaVainillaDbContext))]
-    partial class PechugaVainillaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260920005709_AsignacionesVendedor")]
+    partial class AsignacionesVendedor
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
