@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PechugaVainilla.Api.Dtos;
@@ -94,11 +95,75 @@ public class PerfilesController : ControllerBase
         }
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Editar(string id, EditarUsuarioRequest request, CancellationToken cancellationToken)
+    {
+        if (request.Rol != "Administrador" && request.Rol != "Cliente")
+        {
+            return BadRequest(new { mensaje = "El rol debe ser Administrador o Cliente." });
+        }
+
+        var errores = ValidacionesUsuario.ValidarDatosBasicos(request.Nombre, request.Email, request.WhatsApp, whatsAppRequerido: request.Rol == "Cliente");
+        if (errores.Count > 0)
+        {
+            return BadRequest(new { mensaje = string.Join(" ", errores) });
+        }
+
+        try
+        {
+            // Cambiar el rol es delicado (da o quita acceso al Panel): pide datos de un administrador.
+            var rolActual = await _perfilesService.ObtenerRolAsync(id);
+            if (rolActual != request.Rol
+                && !await _perfilesService.VerificarAdministradorAsync(request.EmailAdmin ?? "", request.PasswordAdmin ?? ""))
+            {
+                return BadRequest(new { mensaje = "Para cambiar el rol, escribe correctamente el correo y la contraseña de un administrador." });
+            }
+
+            await _perfilesService.EditarUsuarioAsync(
+                id,
+                new EdicionUsuarioPanel(request.Nombre, request.Email, request.WhatsApp, request.Rol),
+                cancellationToken);
+            return NoContent();
+        }
+        catch (ReglaDeNegocioException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
+    }
+
+    [HttpPost("{id}/desactivar")]
+    public Task<IActionResult> Desactivar(string id, AutorizacionAdminRequest request, CancellationToken cancellationToken) =>
+        CambiarActivo(id, activo: false, request, cancellationToken);
+
+    [HttpPost("{id}/reactivar")]
+    public Task<IActionResult> Reactivar(string id, AutorizacionAdminRequest request, CancellationToken cancellationToken) =>
+        CambiarActivo(id, activo: true, request, cancellationToken);
+
+    private async Task<IActionResult> CambiarActivo(string id, bool activo, AutorizacionAdminRequest request, CancellationToken cancellationToken)
+    {
+        if (!await _perfilesService.VerificarAdministradorAsync(request.EmailAdmin, request.PasswordAdmin))
+        {
+            return BadRequest(new { mensaje = "El correo o la contraseña del administrador no son correctos." });
+        }
+
+        try
+        {
+            var idAdminActual = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+            await _perfilesService.CambiarActivoAsync(id, activo, idAdminActual, cancellationToken);
+            return NoContent();
+        }
+        catch (ReglaDeNegocioException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
+    }
+
     private static PerfilDto MapearDto(PerfilUsuario perfil) => new(
         perfil.Id,
         perfil.Nombre,
         perfil.Email,
         perfil.WhatsApp,
         perfil.Roles.ToList(),
-        perfil.DebeCambiarPassword);
+        perfil.DebeCambiarPassword,
+        perfil.Activo);
 }

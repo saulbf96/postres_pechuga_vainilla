@@ -26,7 +26,7 @@ public class PerfilesService : IPerfilesService
         foreach (var usuario in usuarios)
         {
             var roles = await _userManager.GetRolesAsync(usuario);
-            resultado.Add(new PerfilUsuario(usuario.Id, usuario.Nombre, usuario.Email!, usuario.PhoneNumber, roles.ToList(), usuario.DebeCambiarPassword));
+            resultado.Add(new PerfilUsuario(usuario.Id, usuario.Nombre, usuario.Email!, usuario.PhoneNumber, roles.ToList(), usuario.DebeCambiarPassword, usuario.Activo));
         }
 
         return resultado.OrderBy(p => p.Nombre).ToList();
@@ -69,9 +69,88 @@ public class PerfilesService : IPerfilesService
     {
         var admin = await _userManager.FindByEmailAsync(email);
         return admin is not null
+            && admin.Activo
             && await _userManager.CheckPasswordAsync(admin, password)
             && await _userManager.IsInRoleAsync(admin, "Administrador");
     }
+
+    public async Task<string?> ObtenerRolAsync(string usuarioId)
+    {
+        var usuario = await BuscarUsuarioAsync(usuarioId);
+        return (await _userManager.GetRolesAsync(usuario)).FirstOrDefault();
+    }
+
+    public async Task EditarUsuarioAsync(string usuarioId, EdicionUsuarioPanel edicion, CancellationToken cancellationToken)
+    {
+        var usuario = await BuscarUsuarioAsync(usuarioId);
+
+        var otroConEseCorreo = await _userManager.FindByEmailAsync(edicion.Email);
+        if (otroConEseCorreo is not null && otroConEseCorreo.Id != usuario.Id)
+        {
+            throw new ReglaDeNegocioException("Ya existe otra cuenta con ese correo.");
+        }
+
+        var rolesActuales = await _userManager.GetRolesAsync(usuario);
+        var cambiaRol = !rolesActuales.Contains(edicion.Rol);
+        if (cambiaRol && rolesActuales.Contains("Administrador") && usuario.Activo && await ContarAdministradoresActivosAsync() <= 1)
+        {
+            throw new ReglaDeNegocioException("No se le puede quitar el rol al último administrador activo.");
+        }
+
+        usuario.Nombre = edicion.Nombre;
+        usuario.PhoneNumber = edicion.WhatsApp;
+
+        // El correo tambien es el usuario para iniciar sesion: se cambian los dos juntos.
+        if (!string.Equals(usuario.Email, edicion.Email, StringComparison.OrdinalIgnoreCase))
+        {
+            usuario.Email = edicion.Email;
+            usuario.UserName = edicion.Email;
+        }
+
+        var resultado = await _userManager.UpdateAsync(usuario);
+        if (!resultado.Succeeded)
+        {
+            throw new ReglaDeNegocioException(string.Join(" ", resultado.Errors.Select(e => e.Description)));
+        }
+
+        if (cambiaRol)
+        {
+            await _userManager.RemoveFromRolesAsync(usuario, rolesActuales);
+            await _userManager.AddToRoleAsync(usuario, edicion.Rol);
+            // Cambiar el sello cierra sus sesiones, para que al volver a entrar ya tenga el rol nuevo.
+            await _userManager.UpdateSecurityStampAsync(usuario);
+        }
+    }
+
+    public async Task CambiarActivoAsync(string usuarioId, bool activo, string idAdminActual, CancellationToken cancellationToken)
+    {
+        var usuario = await BuscarUsuarioAsync(usuarioId);
+
+        if (!activo)
+        {
+            if (usuario.Id == idAdminActual)
+            {
+                throw new ReglaDeNegocioException("No puedes desactivar tu propia cuenta.");
+            }
+
+            if (await _userManager.IsInRoleAsync(usuario, "Administrador") && usuario.Activo && await ContarAdministradoresActivosAsync() <= 1)
+            {
+                throw new ReglaDeNegocioException("No se puede desactivar al último administrador activo.");
+            }
+        }
+
+        usuario.Activo = activo;
+        await _userManager.UpdateAsync(usuario);
+
+        if (!activo)
+        {
+            // Cierra las sesiones que tenga abiertas.
+            await _userManager.UpdateSecurityStampAsync(usuario);
+        }
+    }
+
+    private async Task<int> ContarAdministradoresActivosAsync() =>
+        (await _userManager.GetUsersInRoleAsync("Administrador")).Count(u => u.Activo);
 
     public async Task ExpirarPasswordAsync(string usuarioId, CancellationToken cancellationToken)
     {

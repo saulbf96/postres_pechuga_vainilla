@@ -1,9 +1,13 @@
 namespace PechugaVainilla.Api.Dtos;
 
-public record PerfilDto(string Id, string Nombre, string Email, string? WhatsApp, List<string> Roles, bool DebeCambiarPassword);
+public record PerfilDto(string Id, string Nombre, string Email, string? WhatsApp, List<string> Roles, bool DebeCambiarPassword, bool Activo);
 
 // Sin contraseña: el sistema genera una temporal.
 public record CrearUsuarioRequest(string Nombre, string Email, string? WhatsApp, string Rol);
 
-// Correo y contraseña de un administrador para autorizar expirar/restablecer contraseñas.
+// Datos del administrador solo son obligatorios si la edicion cambia el rol.
+public record EditarUsuarioRequest(string Nombre, string Email, string? WhatsApp, string Rol, string? EmailAdmin, string? PasswordAdmin);
+
+// Correo y contraseña de un administrador para autorizar acciones delicadas
+// (expirar/restablecer contraseña, desactivar/reactivar, cambiar rol).
 public record AutorizacionAdminRequest(string EmailAdmin, string PasswordAdmin);

@@ -67,7 +67,8 @@ public class AuthController : ControllerBase
             return Unauthorized(new { mensaje = "Correo o contraseña incorrectos." });
         }
 
-        var resultado = await _signInManager.PasswordSignInAsync(usuario, request.Password, isPersistent: true, lockoutOnFailure: true);
+        // Primero solo revisa la contraseña (sin crear la sesion) para poder rechazar cuentas desactivadas.
+        var resultado = await _signInManager.CheckPasswordSignInAsync(usuario, request.Password, lockoutOnFailure: true);
 
         if (resultado.IsLockedOut)
         {
@@ -78,6 +79,14 @@ public class AuthController : ControllerBase
         {
             return Unauthorized(new { mensaje = "Correo o contraseña incorrectos." });
         }
+
+        // Solo se dice "desactivada" si la contraseña era correcta, para no revelar datos a un extraño.
+        if (!usuario.Activo)
+        {
+            return Unauthorized(new { mensaje = "Tu cuenta está desactivada. Comunícate con el negocio." });
+        }
+
+        await _signInManager.SignInAsync(usuario, isPersistent: true);
 
         return Ok(await ConstruirUsuarioDto(usuario));
     }

@@ -16,4 +16,8 @@ public class Usuario : IdentityUser
     // true = al iniciar sesion debe poner una contraseña nueva antes de usar la app
     // (usuario recien creado desde el Panel, o contraseña expirada/restablecida por un administrador).
     public bool DebeCambiarPassword { get; set; }
+
+    // false = desactivado: no puede iniciar sesion, pero se conservan sus pedidos e historial
+    // (por eso no se borran usuarios). Se reactiva desde Panel · Perfiles.
+    public bool Activo { get; set; } = true;
 }

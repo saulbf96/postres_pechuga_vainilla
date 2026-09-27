@@ -18,13 +18,6 @@
     </div>
   }
 
-  @if (aviso()) {
-    <div class="bg-hoja/10 border-2 border-hoja rounded-xl p-4 max-w-xl flex items-start justify-between gap-3">
-      <span class="text-hoja font-semibold text-base">✓ {{ aviso() }}</span>
-      <button type="button" (click)="aviso.set(null)" aria-label="Cerrar aviso" class="bg-transparent border-0 text-hoja text-lg cursor-pointer">✕</button>
-    </div>
-  }
-
   @if (mostrarFormulario()) {
     <section class="flex flex-col gap-3 border border-borde rounded-2xl p-4 max-w-xl">
       <h2 class="font-titulo text-xl">Nuevo usuario</h2>
@@ -41,7 +34,7 @@
 
       <label class="flex flex-col gap-1 text-sm">
         WhatsApp ({{ nuevoRol() === 'Cliente' ? 'obligatorio' : 'opcional' }}, 10 números)
-        <input type="tel" placeholder="5512345678" maxlength="10" [ngModel]="nuevoWhatsApp()" (ngModelChange)="onWhatsAppChange($event)" class="h-11 px-4 rounded-xl border border-borde bg-white" />
+        <input type="tel" placeholder="5512345678" maxlength="10" [ngModel]="nuevoWhatsApp()" (ngModelChange)="nuevoWhatsApp.set(soloDiezDigitos($event))" class="h-11 px-4 rounded-xl border border-borde bg-white" />
       </label>
 
       <p class="text-xs text-texto-secundario m-0">
@@ -79,7 +72,7 @@
         (ngModelChange)="busqueda.set($event)"
         class="h-11 px-4 rounded-xl border border-borde bg-white"
       />
-      <div class="flex gap-4 text-sm">
+      <div class="flex flex-wrap gap-x-4 gap-y-2 text-sm">
         <label class="flex items-center gap-2">
           <input type="radio" name="filtroRol" value="Todos" [ngModel]="filtroRol()" (ngModelChange)="filtroRol.set($event)" />
           Todos
@@ -92,15 +85,24 @@
           <input type="radio" name="filtroRol" value="Administrador" [ngModel]="filtroRol()" (ngModelChange)="filtroRol.set($event)" />
           Administradores
         </label>
+        <label class="flex items-center gap-2 md:ml-auto">
+          <input type="checkbox" name="mostrarInactivos" [ngModel]="mostrarInactivos()" (ngModelChange)="mostrarInactivos.set($event)" />
+          Mostrar inactivos
+        </label>
       </div>
     </div>
 
     <div class="flex flex-col gap-3 max-w-3xl">
       @for (perfil of perfilesFiltrados(); track perfil.id) {
-        <article class="border border-borde rounded-2xl p-4 flex flex-col gap-2">
-          <div class="flex items-center justify-between">
+        <article class="border border-borde rounded-2xl p-4 flex flex-col gap-2" [class.opacity-60]="!perfil.activo">
+          <div class="flex items-center justify-between gap-2">
             <span class="font-titulo text-lg">{{ perfil.nombre }}</span>
-            <span class="text-xs text-texto-secundario">{{ perfil.roles.join(', ') }}</span>
+            <span class="text-xs text-texto-secundario">
+              {{ perfil.roles.join(', ') }}
+              @if (!perfil.activo) {
+                · <strong class="text-fresa">Inactivo</strong>
+              }
+            </span>
           </div>
           <span class="text-sm text-texto-secundario">
             {{ perfil.email }}
@@ -108,24 +110,28 @@
               · {{ perfil.whatsApp }}
             }
           </span>
-          @if (perfil.debeCambiarPassword) {
+          @if (perfil.debeCambiarPassword && perfil.activo) {
             <span class="text-xs font-semibold text-fresa">Debe cambiar su contraseña al entrar</span>
           }
           <div class="flex flex-wrap gap-2 mt-1">
-            <button
-              type="button"
-              (click)="abrirAccionPassword('expirar', perfil)"
-              class="h-9 px-3 rounded-full border border-borde bg-white text-cacao text-xs font-semibold cursor-pointer"
-            >
-              Expirar contraseña
-            </button>
-            <button
-              type="button"
-              (click)="abrirAccionPassword('restablecer', perfil)"
-              class="h-9 px-3 rounded-full border border-fresa bg-white text-fresa text-xs font-semibold cursor-pointer"
-            >
-              Restablecer contraseña
-            </button>
+            @if (perfil.activo) {
+              <button type="button" (click)="abrirEdicion(perfil)" class="h-9 px-3 rounded-full border border-borde bg-white text-cacao text-xs font-semibold cursor-pointer">
+                Editar
+              </button>
+              <button type="button" (click)="abrirAccion('expirar', perfil)" class="h-9 px-3 rounded-full border border-borde bg-white text-cacao text-xs font-semibold cursor-pointer">
+                Expirar contraseña
+              </button>
+              <button type="button" (click)="abrirAccion('restablecer', perfil)" class="h-9 px-3 rounded-full border border-borde bg-white text-cacao text-xs font-semibold cursor-pointer">
+                Restablecer contraseña
+              </button>
+              <button type="button" (click)="abrirAccion('desactivar', perfil)" class="h-9 px-3 rounded-full border border-fresa bg-white text-fresa text-xs font-semibold cursor-pointer">
+                Desactivar
+              </button>
+            } @else {
+              <button type="button" (click)="abrirAccion('reactivar', perfil)" class="h-9 px-3 rounded-full border border-hoja bg-white text-hoja text-xs font-semibold cursor-pointer">
+                Reactivar
+              </button>
+            }
           </div>
         </article>
       }
@@ -136,17 +142,93 @@
     </div>
   }
 
-  @if (accionPassword(); as accion) {
-    <div class="fixed inset-0 bg-cacao/40 flex items-center justify-center z-50 px-4" (click)="cerrarAccionPassword()">
+  <!-- ===== Cuadro: editar usuario ===== -->
+  @if (edicion(); as perfil) {
+    <div class="fixed inset-0 bg-cacao/40 flex items-center justify-center z-50 px-4 py-6 overflow-y-auto" (click)="edicion.set(null)">
+      <div class="bg-crema rounded-2xl p-6 max-w-sm w-full flex flex-col gap-3 border border-borde my-auto" (click)="$event.stopPropagation()">
+        <h2 class="font-titulo text-xl text-cacao m-0">Editar usuario</h2>
+
+        @if (errorEdicion()) {
+          <div class="bg-fresa/10 border-2 border-fresa rounded-xl p-3">
+            <span class="text-fresa font-semibold text-sm">⚠ {{ errorEdicion() }}</span>
+          </div>
+        }
+
+        <label class="flex flex-col gap-1 text-sm">
+          Nombre
+          <input type="text" [ngModel]="editNombre()" (ngModelChange)="editNombre.set($event)" class="h-11 px-4 rounded-xl border border-borde bg-white" />
+        </label>
+        <label class="flex flex-col gap-1 text-sm">
+          Correo (con este inicia sesión)
+          <input type="email" [ngModel]="editEmail()" (ngModelChange)="editEmail.set($event)" class="h-11 px-4 rounded-xl border border-borde bg-white" />
+        </label>
+        <label class="flex flex-col gap-1 text-sm">
+          WhatsApp ({{ editRol() === 'Cliente' ? 'obligatorio' : 'opcional' }}, 10 números)
+          <input type="tel" maxlength="10" [ngModel]="editWhatsApp()" (ngModelChange)="editWhatsApp.set(soloDiezDigitos($event))" class="h-11 px-4 rounded-xl border border-borde bg-white" />
+        </label>
+
+        <fieldset class="flex flex-col gap-1 text-sm border-0 p-0 m-0">
+          <legend class="mb-1">Rol</legend>
+          <div class="flex gap-4">
+            <label class="flex items-center gap-2">
+              <input type="radio" name="editRol" value="Cliente" [ngModel]="editRol()" (ngModelChange)="editRol.set($event)" />
+              Cliente
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="radio" name="editRol" value="Administrador" [ngModel]="editRol()" (ngModelChange)="editRol.set($event)" />
+              Administrador
+            </label>
+          </div>
+        </fieldset>
+
+        @if (edicionCambiaRol()) {
+          <p class="text-sm text-cacao m-0">Cambiar el rol requiere autorización. Escribe el correo y la contraseña de un administrador:</p>
+          <label class="flex flex-col gap-1 text-sm">
+            Correo del administrador
+            <input type="email" autocomplete="off" [ngModel]="emailAdmin()" (ngModelChange)="emailAdmin.set($event)" class="h-11 px-4 rounded-xl border border-borde bg-white" />
+          </label>
+          <label class="flex flex-col gap-1 text-sm">
+            Contraseña del administrador
+            <input type="password" autocomplete="off" [ngModel]="passwordAdmin()" (ngModelChange)="passwordAdmin.set($event)" class="h-11 px-4 rounded-xl border border-borde bg-white" />
+          </label>
+        }
+
+        <div class="flex gap-2 justify-end mt-1">
+          <button type="button" (click)="edicion.set(null)" class="h-10 px-4 rounded-full border border-borde bg-white text-cacao text-sm font-semibold cursor-pointer">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            [disabled]="guardandoEdicion()"
+            (click)="guardarEdicion()"
+            class="h-10 px-4 rounded-full bg-fresa text-crema text-sm font-semibold border-0 cursor-pointer disabled:opacity-60"
+          >
+            {{ guardandoEdicion() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ===== Cuadro: acciones que piden datos de un administrador ===== -->
+  @if (accionAdmin(); as accion) {
+    <div class="fixed inset-0 bg-cacao/40 flex items-center justify-center z-50 px-4" (click)="accionAdmin.set(null)">
       <div class="bg-crema rounded-2xl p-6 max-w-sm w-full flex flex-col gap-3 border border-borde" (click)="$event.stopPropagation()">
-        <h2 class="font-titulo text-xl text-cacao m-0">
-          {{ accion.tipo === 'expirar' ? 'Expirar contraseña' : 'Restablecer contraseña' }}
-        </h2>
+        <h2 class="font-titulo text-xl text-cacao m-0">{{ tituloAccion(accion.tipo) }}</h2>
         <p class="text-sm text-texto-secundario m-0">
-          @if (accion.tipo === 'expirar') {
-            <strong>{{ accion.perfil.nombre }}</strong> seguirá entrando con su contraseña actual, pero se le pedirá una nueva al entrar. No verás ninguna contraseña.
-          } @else {
-            Para cuando <strong>{{ accion.perfil.nombre }}</strong> olvidó su contraseña: se genera una temporal que verás aquí para pasársela.
+          @switch (accion.tipo) {
+            @case ('expirar') {
+              <strong>{{ accion.perfil.nombre }}</strong> seguirá entrando con su contraseña actual, pero se le pedirá una nueva al entrar. No verás ninguna contraseña.
+            }
+            @case ('restablecer') {
+              Para cuando <strong>{{ accion.perfil.nombre }}</strong> olvidó su contraseña: se genera una temporal que verás para pasársela.
+            }
+            @case ('desactivar') {
+              <strong>{{ accion.perfil.nombre }}</strong> ya no podrá entrar y se cerrarán sus sesiones. Sus pedidos se conservan y puedes reactivarlo después.
+            }
+            @case ('reactivar') {
+              <strong>{{ accion.perfil.nombre }}</strong> podrá volver a entrar con su contraseña.
+            }
           }
         </p>
         <p class="text-sm text-cacao m-0">Para autorizar, escribe el correo y la contraseña de un administrador:</p>
@@ -167,16 +249,42 @@
         </label>
 
         <div class="flex gap-2 justify-end mt-1">
-          <button type="button" (click)="cerrarAccionPassword()" class="h-10 px-4 rounded-full border border-borde bg-white text-cacao text-sm font-semibold cursor-pointer">
+          <button type="button" (click)="accionAdmin.set(null)" class="h-10 px-4 rounded-full border border-borde bg-white text-cacao text-sm font-semibold cursor-pointer">
             Cancelar
           </button>
           <button
             type="button"
             [disabled]="procesandoAccion()"
-            (click)="confirmarAccionPassword()"
+            (click)="confirmarAccion()"
             class="h-10 px-4 rounded-full bg-fresa text-crema text-sm font-semibold border-0 cursor-pointer disabled:opacity-60"
           >
             {{ procesandoAccion() ? 'Procesando...' : 'Confirmar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ===== Cuadro: resultado (no se cierra al tocar afuera, para no perder la contraseña) ===== -->
+  @if (resultado(); as r) {
+    <div class="fixed inset-0 bg-cacao/40 flex items-center justify-center z-50 px-4">
+      <div class="bg-crema rounded-2xl p-6 max-w-sm w-full flex flex-col gap-3 border border-borde" role="dialog" aria-modal="true">
+        <h2 class="font-titulo text-xl text-hoja m-0">✓ {{ r.titulo }}</h2>
+        <p class="text-sm text-cacao m-0">{{ r.mensaje }}</p>
+
+        @if (r.passwordTemporal) {
+          <div class="flex items-center justify-between gap-2 bg-white border-2 border-hoja rounded-xl px-4 py-3">
+            <span class="font-mono text-xl font-semibold text-cacao select-all">{{ r.passwordTemporal }}</span>
+            <button type="button" (click)="copiarPassword(r.passwordTemporal)" class="h-9 px-3 rounded-full border border-hoja bg-white text-hoja text-xs font-semibold cursor-pointer">
+              {{ copiado() ? 'Copiada ✓' : 'Copiar' }}
+            </button>
+          </div>
+          <p class="text-xs text-texto-secundario m-0">Anótala: al cerrar este cuadro ya no se vuelve a mostrar.</p>
+        }
+
+        <div class="flex justify-end mt-1">
+          <button type="button" (click)="resultado.set(null)" class="h-10 px-5 rounded-full bg-fresa text-crema text-sm font-semibold border-0 cursor-pointer">
+            Entendido
           </button>
         </div>
       </div>

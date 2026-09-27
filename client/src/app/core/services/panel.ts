@@ -8,6 +8,7 @@ import type {
   CrearProductoRequest,
   CrearUsuarioRequest,
   EditarProductoRequest,
+  EditarUsuarioRequest,
   GuardarPuntoEntregaRequest,
   PerfilDto,
   PresentacionAdminDto,
@@ -96,5 +97,17 @@ export class PanelService {
 
   restablecerPassword(usuarioId: string, autorizacion: AutorizacionAdminRequest) {
     return this.http.post<{ passwordTemporal: string }>(`/api/v1/admin/perfiles/${usuarioId}/restablecer-password`, autorizacion);
+  }
+
+  editarUsuario(usuarioId: string, request: EditarUsuarioRequest) {
+    return this.http.put<void>(`/api/v1/admin/perfiles/${usuarioId}`, request);
+  }
+
+  desactivarUsuario(usuarioId: string, autorizacion: AutorizacionAdminRequest) {
+    return this.http.post<void>(`/api/v1/admin/perfiles/${usuarioId}/desactivar`, autorizacion);
+  }
+
+  reactivarUsuario(usuarioId: string, autorizacion: AutorizacionAdminRequest) {
+    return this.http.post<void>(`/api/v1/admin/perfiles/${usuarioId}/reactivar`, autorizacion);
   }
 }

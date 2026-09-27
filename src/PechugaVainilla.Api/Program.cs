@@ -128,18 +128,28 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Quien tiene la contraseña expirada/temporal no puede usar nada que requiera sesion (panel,
-// pedidos...) hasta cambiarla. Las rutas /api/v1/auth quedan libres para poder cambiarla o salir.
+// Revisa en cada peticion que requiere sesion:
+// - Cuenta desactivada: 401 en todo (aunque la cookie siga viva), para que salga de inmediato.
+// - Contraseña expirada/temporal: no puede usar nada (panel, pedidos...) hasta cambiarla.
+//   Las rutas /api/v1/auth quedan libres para poder cambiarla o salir.
 app.Use(async (context, next) =>
 {
     var requiereSesion = context.GetEndpoint()?.Metadata.GetMetadata<IAuthorizeData>() is not null;
     var esRutaDeAuth = context.Request.Path.StartsWithSegments("/api/v1/auth");
 
-    if (requiereSesion && !esRutaDeAuth && context.User.Identity?.IsAuthenticated == true)
+    if (requiereSesion && context.User.Identity?.IsAuthenticated == true)
     {
         var userManager = context.RequestServices.GetRequiredService<UserManager<Usuario>>();
         var usuario = await userManager.GetUserAsync(context.User);
-        if (usuario?.DebeCambiarPassword == true)
+
+        if (usuario is not null && !usuario.Activo)
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await context.Response.WriteAsJsonAsync(new { mensaje = "Tu cuenta está desactivada." });
+            return;
+        }
+
+        if (!esRutaDeAuth && usuario?.DebeCambiarPassword == true)
         {
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             await context.Response.WriteAsJsonAsync(new { mensaje = "Tu contraseña expiró. Escribe una contraseña nueva para continuar." });

@@ -90,6 +90,17 @@ export interface PerfilDto {
   whatsApp: string | null;
   roles: string[];
   debeCambiarPassword: boolean;
+  activo: boolean;
+}
+
+// emailAdmin/passwordAdmin solo son obligatorios si la edicion cambia el rol.
+export interface EditarUsuarioRequest {
+  nombre: string;
+  email: string;
+  whatsApp: string | null;
+  rol: 'Administrador' | 'Cliente';
+  emailAdmin: string | null;
+  passwordAdmin: string | null;
 }
 
 // Sin contraseña: el sistema genera una temporal y la regresa al crear.
