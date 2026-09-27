@@ -9,10 +9,12 @@ namespace PechugaVainilla.Infrastructure.Services;
 public class PerfilesService : IPerfilesService
 {
     private readonly UserManager<Usuario> _userManager;
+    private readonly CifradoContrasena _cifradoContrasena;
 
-    public PerfilesService(UserManager<Usuario> userManager)
+    public PerfilesService(UserManager<Usuario> userManager, CifradoContrasena cifradoContrasena)
     {
         _userManager = userManager;
+        _cifradoContrasena = cifradoContrasena;
     }
 
     public async Task<IReadOnlyList<PerfilUsuario>> ObtenerTodosAsync(CancellationToken cancellationToken)
@@ -51,6 +53,8 @@ public class PerfilesService : IPerfilesService
         {
             throw new ReglaDeNegocioException(string.Join(" ", resultado.Errors.Select(e => e.Description)));
         }
+
+        await _cifradoContrasena.GuardarAsync(usuario.Id, nuevo.Password, cancellationToken);
 
         await _userManager.AddToRoleAsync(usuario, nuevo.Rol);
 

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using PechugaVainilla.Core.Entities;
 using PechugaVainilla.Infrastructure.Identity;
 
@@ -30,7 +31,15 @@ public class PechugaVainillaDbContext : IdentityDbContext<Usuario>
 
         // Renombra las tablas de Identity (por default salen como AspNetUsers, AspNetRoles...)
         // a nombres en español, consistentes con el resto de la base de datos.
-        modelBuilder.Entity<Usuario>(entity => entity.ToTable("Usuarios"));
+        modelBuilder.Entity<Usuario>(entity =>
+        {
+            entity.ToTable("Usuarios");
+
+            // PasswordCifrada solo la escribe CifradoContrasena con SQL directo. Sin esto, cada
+            // UserManager.UpdateAsync (asignar rol, login, etc.) la sobrescribia con NULL.
+            entity.Property(u => u.PasswordCifrada).Metadata.SetBeforeSaveBehavior(PropertySaveBehavior.Ignore);
+            entity.Property(u => u.PasswordCifrada).Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+        });
         modelBuilder.Entity<IdentityRole>(entity => entity.ToTable("Roles"));
         modelBuilder.Entity<IdentityUserRole<string>>(entity => entity.ToTable("UsuarioRoles"));
         modelBuilder.Entity<IdentityUserClaim<string>>(entity => entity.ToTable("UsuarioClaims"));

@@ -13,11 +13,13 @@ public class AuthController : ControllerBase
 {
     private readonly UserManager<Usuario> _userManager;
     private readonly SignInManager<Usuario> _signInManager;
+    private readonly CifradoContrasena _cifradoContrasena;
 
-    public AuthController(UserManager<Usuario> userManager, SignInManager<Usuario> signInManager)
+    public AuthController(UserManager<Usuario> userManager, SignInManager<Usuario> signInManager, CifradoContrasena cifradoContrasena)
     {
         _userManager = userManager;
         _signInManager = signInManager;
+        _cifradoContrasena = cifradoContrasena;
     }
 
     [HttpPost("registro")]
@@ -44,6 +46,9 @@ public class AuthController : ControllerBase
         {
             return BadRequest(new { errores = resultado.Errors.Select(e => e.Description) });
         }
+
+        // Despues de CreateAsync: el usuario ya existe en la tabla y se le puede hacer el UPDATE.
+        await _cifradoContrasena.GuardarAsync(usuario.Id, request.Password);
 
         await _userManager.AddToRoleAsync(usuario, "Cliente");
         await _signInManager.SignInAsync(usuario, isPersistent: true);
