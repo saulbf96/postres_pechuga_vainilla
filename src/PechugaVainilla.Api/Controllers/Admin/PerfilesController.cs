@@ -36,9 +36,9 @@ public class PerfilesController : ControllerBase
             return BadRequest(new { mensaje = string.Join(" ", errores) });
         }
 
-        if (request.Rol != "Administrador")
+        if (request.Rol != "Administrador" && request.Rol != "Cliente")
         {
-            return BadRequest(new { mensaje = "El rol debe ser Administrador." });
+            return BadRequest(new { mensaje = "El rol debe ser Administrador o Cliente." });
         }
 
         try

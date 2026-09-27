@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PanelService } from '../../core/services/panel';
 import { PanelNav } from '../../shared/panel-nav/panel-nav';
@@ -18,11 +18,32 @@ export class PanelPerfiles implements OnInit {
   protected readonly mostrarFormulario = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  // Formulario "nuevo administrador" (solo hay un rol posible para dar de alta desde aqui)
+  // Formulario "nuevo usuario"
   protected readonly nuevoNombre = signal('');
   protected readonly nuevoEmail = signal('');
   protected readonly nuevoWhatsApp = signal('');
   protected readonly nuevoPassword = signal('');
+  protected readonly nuevoRol = signal<'Administrador' | 'Cliente'>('Cliente');
+
+  // Buscador y filtro de la lista
+  protected readonly busqueda = signal('');
+  protected readonly filtroRol = signal<'Todos' | 'Administrador' | 'Cliente'>('Todos');
+
+  // Se recalcula sola cada vez que cambian perfiles, busqueda o filtroRol.
+  protected readonly perfilesFiltrados = computed(() => {
+    const texto = this.busqueda().trim().toLowerCase();
+    const rol = this.filtroRol();
+
+    return this.perfiles().filter((perfil) => {
+      const coincideRol = rol === 'Todos' || perfil.roles.includes(rol);
+      const coincideTexto =
+        !texto ||
+        perfil.nombre.toLowerCase().includes(texto) ||
+        perfil.email.toLowerCase().includes(texto) ||
+        (perfil.whatsApp ?? '').includes(texto);
+      return coincideRol && coincideTexto;
+    });
+  });
 
   ngOnInit(): void {
     this.cargar();
@@ -58,7 +79,7 @@ export class PanelPerfiles implements OnInit {
         email: this.nuevoEmail(),
         whatsApp: this.nuevoWhatsApp() || null,
         password: this.nuevoPassword(),
-        rol: 'Administrador',
+        rol: this.nuevoRol(),
       })
       .subscribe({
         next: () => {
@@ -66,6 +87,7 @@ export class PanelPerfiles implements OnInit {
           this.nuevoEmail.set('');
           this.nuevoWhatsApp.set('');
           this.nuevoPassword.set('');
+          this.nuevoRol.set('Cliente');
           this.mostrarFormulario.set(false);
           this.cargar();
         },

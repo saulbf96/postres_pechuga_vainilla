@@ -96,5 +96,5 @@ export interface CrearUsuarioRequest {
   email: string;
   whatsApp: string | null;
   password: string;
-  rol: 'Administrador';
+  rol: 'Administrador' | 'Cliente';
 }

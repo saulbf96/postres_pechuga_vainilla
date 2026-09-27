@@ -8,7 +8,7 @@
       (click)="mostrarFormulario.set(!mostrarFormulario())"
       class="h-10 px-4 rounded-full bg-fresa text-crema text-sm font-semibold"
     >
-      {{ mostrarFormulario() ? 'Cancelar' : '+ Nuevo administrador' }}
+      {{ mostrarFormulario() ? 'Cancelar' : '+ Nuevo usuario' }}
     </button>
   </div>
 
@@ -20,7 +20,7 @@
 
   @if (mostrarFormulario()) {
     <section class="flex flex-col gap-3 border border-borde rounded-2xl p-4 max-w-xl">
-      <h2 class="font-titulo text-xl">Nuevo administrador</h2>
+      <h2 class="font-titulo text-xl">Nuevo usuario</h2>
 
       <label class="flex flex-col gap-1 text-sm">
         Nombre
@@ -42,8 +42,22 @@
         <input type="text" [ngModel]="nuevoPassword()" (ngModelChange)="nuevoPassword.set($event)" class="h-11 px-4 rounded-xl border border-borde bg-white" />
       </label>
 
+      <fieldset class="flex flex-col gap-1 text-sm border-0 p-0 m-0">
+        <legend class="mb-1">Rol</legend>
+        <div class="flex gap-4">
+          <label class="flex items-center gap-2">
+            <input type="radio" name="nuevoRol" value="Cliente" [ngModel]="nuevoRol()" (ngModelChange)="nuevoRol.set($event)" />
+            Cliente
+          </label>
+          <label class="flex items-center gap-2">
+            <input type="radio" name="nuevoRol" value="Administrador" [ngModel]="nuevoRol()" (ngModelChange)="nuevoRol.set($event)" />
+            Administrador
+          </label>
+        </div>
+      </fieldset>
+
       <button type="button" (click)="crearUsuario()" class="h-11 rounded-full bg-fresa text-crema text-sm font-semibold">
-        Crear administrador
+        Crear usuario
       </button>
     </section>
   }
@@ -52,7 +66,31 @@
     <p class="text-texto-secundario">Cargando...</p>
   } @else {
     <div class="flex flex-col gap-3 max-w-3xl">
-      @for (perfil of perfiles(); track perfil.id) {
+      <input
+        type="search"
+        placeholder="Buscar por nombre, correo o WhatsApp"
+        [ngModel]="busqueda()"
+        (ngModelChange)="busqueda.set($event)"
+        class="h-11 px-4 rounded-xl border border-borde bg-white"
+      />
+      <div class="flex gap-4 text-sm">
+        <label class="flex items-center gap-2">
+          <input type="radio" name="filtroRol" value="Todos" [ngModel]="filtroRol()" (ngModelChange)="filtroRol.set($event)" />
+          Todos
+        </label>
+        <label class="flex items-center gap-2">
+          <input type="radio" name="filtroRol" value="Cliente" [ngModel]="filtroRol()" (ngModelChange)="filtroRol.set($event)" />
+          Clientes
+        </label>
+        <label class="flex items-center gap-2">
+          <input type="radio" name="filtroRol" value="Administrador" [ngModel]="filtroRol()" (ngModelChange)="filtroRol.set($event)" />
+          Administradores
+        </label>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-3 max-w-3xl">
+      @for (perfil of perfilesFiltrados(); track perfil.id) {
         <article class="border border-borde rounded-2xl p-4 flex flex-col gap-2">
           <div class="flex items-center justify-between">
             <span class="font-titulo text-lg">{{ perfil.nombre }}</span>
@@ -65,6 +103,10 @@
             }
           </span>
         </article>
+      }
+
+      @if (perfilesFiltrados().length === 0) {
+        <p class="text-texto-secundario">No hay usuarios que coincidan con la búsqueda.</p>
       }
     </div>
   }
