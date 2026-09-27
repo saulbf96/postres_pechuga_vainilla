@@ -15,11 +15,11 @@ public class ProductosController : ControllerBase
         _productoService = productoService;
     }
 
-    // [FromQuery] vendedorId: filtro opcional, ej. GET /api/v1/productos?vendedorId=1
+    // [FromQuery] categoriaId: filtro opcional, ej. GET /api/v1/productos?categoriaId=1
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<ProductoDto>>> Get([FromQuery] int? vendedorId, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<ProductoDto>>> Get([FromQuery] int? categoriaId, CancellationToken cancellationToken)
     {
-        var productos = await _productoService.ObtenerActivosAsync(vendedorId, cancellationToken);
+        var productos = await _productoService.ObtenerActivosAsync(categoriaId, cancellationToken);
 
         var dtos = productos.Select(p => new ProductoDto(
             p.Id,
@@ -27,8 +27,8 @@ public class ProductosController : ControllerBase
             p.Descripcion,
             p.Alergenos,
             p.FotoRuta,
-            p.VendedorId,
-            p.Vendedor.Nombre,
+            p.CategoriaId,
+            p.Categoria.Nombre,
             p.Presentaciones
                 .Where(pr => pr.Activo)
                 .Select(pr => new PresentacionDto(pr.Id, pr.Nombre, pr.Precio))

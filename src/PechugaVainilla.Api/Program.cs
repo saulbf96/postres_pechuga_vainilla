@@ -4,6 +4,7 @@ using PechugaVainilla.Core.Interfaces;
 using PechugaVainilla.Infrastructure.Data;
 using PechugaVainilla.Infrastructure.Identity;
 using PechugaVainilla.Infrastructure.Services;
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,11 +26,10 @@ builder.Services.AddDbContext<PechugaVainillaDbContext>(options =>
 
 // AddScoped: una instancia nueva de cada servicio por peticion HTTP.
 // Aqui conectamos la interfaz (lo que pide el controller) con su implementacion real (Infrastructure).
-builder.Services.AddScoped<IVendedorService, VendedorService>();
+builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<IProductoService, ProductoService>();
 builder.Services.AddScoped<IPuntoEntregaService, PuntoEntregaService>();
 builder.Services.AddScoped<IPedidoService, PedidoService>();
-builder.Services.AddScoped<IAccesoVendedorService, AccesoVendedorService>();
 builder.Services.AddScoped<IPerfilesService, PerfilesService>();
 
 // Identity: maneja el hash de contraseñas, bloqueo por intentos fallidos, roles, etc.
@@ -38,7 +38,8 @@ builder.Services.AddIdentity<Usuario, IdentityRole>(options =>
     // Politica de contraseñas (CLAUDE.md: "politica de contraseñas, bloqueo por intentos fallidos")
     options.Password.RequiredLength = 8;
     options.Password.RequireDigit = true;
-    options.Password.RequireUppercase = false;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireLowercase = false; // Identity la activa por default si no se apaga aqui
     options.Password.RequireNonAlphanumeric = false;
 
     options.Lockout.MaxFailedAccessAttempts = 5;
@@ -47,7 +48,8 @@ builder.Services.AddIdentity<Usuario, IdentityRole>(options =>
     options.User.RequireUniqueEmail = true;
 })
     .AddEntityFrameworkStores<PechugaVainillaDbContext>()
-    .AddDefaultTokenProviders();
+    .AddDefaultTokenProviders()
+    .AddErrorDescriber<ErrorDescriberEnEspanol>(); // mensajes de Identity en español, no en ingles
 
 // Decidimos cookie HttpOnly (no JWT/localStorage) porque Angular y la API viven en el mismo
 // sitio - evita el riesgo de robo de token por XSS que tendria guardarlo en localStorage.
@@ -94,7 +96,22 @@ if (app.Environment.IsDevelopment())
     await RoleSeeder.SeedAsync(roleManager);
 
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Usuario>>();
-    await CuentasVendedorSeeder.SeedAsync(userManager, db);
+    await CuentasAdministradorSeeder.SeedAsync(userManager);
+
+    // "dotnet run" desde la terminal NO abre el navegador solo (eso solo lo hace Visual Studio
+    // con F5) - lo abrimos nosotros mismos en cuanto el servidor ya esta listo para recibir peticiones.
+    app.Lifetime.ApplicationStarted.Register(() =>
+    {
+        var url = app.Urls.FirstOrDefault() ?? "http://localhost:5081";
+        try
+        {
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        catch
+        {
+            // Si por lo que sea no se puede abrir el navegador, no tumbamos la app por eso.
+        }
+    });
 }
 
 app.UseHttpsRedirection();

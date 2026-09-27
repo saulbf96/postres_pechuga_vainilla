@@ -4,16 +4,21 @@ namespace PechugaVainilla.Api.Dtos;
 
 public record ItemCarritoRequest(int ProductoId, int PresentacionId, int Cantidad, string? Notas);
 
-public record GrupoCheckoutRequest(int VendedorId, int PuntoEntregaId, DateOnly FechaEntrega, TimeOnly HoraEntrega, List<ItemCarritoRequest> Items);
+// Un checkout es un solo pedido (ya no se separa por vendedor): una entrega para todo el carrito.
+public record CheckoutRequest(
+    string NombreCliente,
+    string WhatsApp,
+    int PuntoEntregaId,
+    DateOnly FechaEntrega,
+    TimeOnly HoraEntrega,
+    string? DetalleEntrega,
+    MetodoPago MetodoPago,
+    List<ItemCarritoRequest> Items);
 
-public record CheckoutRequest(string NombreCliente, string WhatsApp, string? DetalleEntrega, MetodoPago MetodoPago, List<GrupoCheckoutRequest> Grupos);
-
-public record PedidoDetalleDto(int Id, string NombreProducto, decimal PrecioUnitario, int Cantidad, string? Notas);
+public record PedidoDetalleDto(int Id, string NombreProducto, int CategoriaId, decimal PrecioUnitario, int Cantidad, string? Notas);
 
 public record PedidoDto(
     int Id,
-    string CheckoutId,
-    string VendedorNombre,
     string PuntoEntregaNombre,
     DateOnly FechaEntrega,
     TimeOnly HoraEntrega,

@@ -4,9 +4,9 @@ public class Producto
 {
     public int Id { get; set; }
 
-    // Clave foranea: a que vendedor pertenece este producto
-    public int VendedorId { get; set; }
-    public required Vendedor Vendedor { get; set; }
+    // Clave foranea: a que categoria pertenece este producto
+    public int CategoriaId { get; set; }
+    public required Categoria Categoria { get; set; }
 
     public required string Nombre { get; set; }
     public string? Descripcion { get; set; }

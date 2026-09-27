@@ -4,7 +4,7 @@ namespace PechugaVainilla.Infrastructure.Identity;
 
 public static class RoleSeeder
 {
-    public static readonly string[] Roles = ["Administrador", "Vendedor", "Cliente", "Soporte"];
+    public static readonly string[] Roles = ["Administrador", "Cliente"];
 
     public static async Task SeedAsync(RoleManager<IdentityRole> roleManager)
     {

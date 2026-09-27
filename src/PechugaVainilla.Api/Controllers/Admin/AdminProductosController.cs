@@ -1,53 +1,38 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using PechugaVainilla.Api.Dtos;
 using PechugaVainilla.Core.Entities;
 using PechugaVainilla.Core.Interfaces;
-using PechugaVainilla.Infrastructure.Identity;
 
 namespace PechugaVainilla.Api.Controllers.Admin;
 
-// Panel: un Administrador ve/edita todo; un Vendedor solo lo de sus negocios asignados
-// (ResolverVendedorIdsAsync se encarga de ese filtro en cada accion; una persona puede
-// tener acceso a mas de un vendedor si ayuda a entregar de los dos lineas).
+// Panel: cualquier Administrador ve y edita todos los productos, sin filtro.
 [ApiController]
 [Route("api/v1/admin/productos")]
-[Authorize(Roles = "Administrador,Vendedor")]
+[Authorize(Roles = "Administrador")]
 public class AdminProductosController : ControllerBase
 {
     private readonly IProductoService _productoService;
-    private readonly IAccesoVendedorService _accesoVendedorService;
-    private readonly UserManager<Usuario> _userManager;
 
-    public AdminProductosController(IProductoService productoService, IAccesoVendedorService accesoVendedorService, UserManager<Usuario> userManager)
+    public AdminProductosController(IProductoService productoService)
     {
         _productoService = productoService;
-        _accesoVendedorService = accesoVendedorService;
-        _userManager = userManager;
     }
 
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<AdminProductoDto>>> Get(CancellationToken cancellationToken)
     {
-        var vendedorIds = await ResolverVendedorIdsAsync(cancellationToken);
-        var productos = await _productoService.ObtenerTodosAsync(vendedorIds, cancellationToken);
+        var productos = await _productoService.ObtenerTodosAsync(cancellationToken);
         return Ok(productos.Select(MapearDto).ToList());
     }
 
     [HttpPost]
     public async Task<ActionResult<AdminProductoDto>> Crear(CrearProductoRequest request, CancellationToken cancellationToken)
     {
-        var vendedorId = await ResolverVendedorIdParaEscrituraAsync(request.VendedorId, cancellationToken);
-        if (vendedorId is null)
-        {
-            return BadRequest(new { mensaje = "Indica a que vendedor pertenece el producto." });
-        }
-
         try
         {
             var nuevo = new NuevoProducto(
-                vendedorId.Value,
+                request.CategoriaId,
                 request.Nombre,
                 request.Descripcion,
                 request.Alergenos,
@@ -68,9 +53,8 @@ public class AdminProductosController : ControllerBase
     {
         try
         {
-            var vendedorIds = await ResolverVendedorIdsAsync(cancellationToken);
             await _productoService.ActualizarAsync(
-                id, vendedorIds,
+                id,
                 new EdicionProducto(request.Nombre, request.Descripcion, request.Alergenos, request.MaxPorDia),
                 cancellationToken);
             return NoContent();
@@ -86,8 +70,7 @@ public class AdminProductosController : ControllerBase
     {
         try
         {
-            var vendedorIds = await ResolverVendedorIdsAsync(cancellationToken);
-            await _productoService.CambiarActivoAsync(id, vendedorIds, request.Activo, cancellationToken);
+            await _productoService.CambiarActivoAsync(id, request.Activo, cancellationToken);
             return NoContent();
         }
         catch (ReglaDeNegocioException ex)
@@ -101,9 +84,8 @@ public class AdminProductosController : ControllerBase
     {
         try
         {
-            var vendedorIds = await ResolverVendedorIdsAsync(cancellationToken);
             var presentacion = await _productoService.AgregarPresentacionAsync(
-                productoId, vendedorIds, new PresentacionInput(request.Nombre, request.Precio), cancellationToken);
+                productoId, new PresentacionInput(request.Nombre, request.Precio), cancellationToken);
             return Ok(new PresentacionAdminDto(presentacion.Id, presentacion.Nombre, presentacion.Precio, presentacion.Activo));
         }
         catch (ReglaDeNegocioException ex)
@@ -117,9 +99,8 @@ public class AdminProductosController : ControllerBase
     {
         try
         {
-            var vendedorIds = await ResolverVendedorIdsAsync(cancellationToken);
             await _productoService.EditarPresentacionAsync(
-                presentacionId, vendedorIds, new PresentacionInput(request.Nombre, request.Precio), cancellationToken);
+                presentacionId, new PresentacionInput(request.Nombre, request.Precio), cancellationToken);
             return NoContent();
         }
         catch (ReglaDeNegocioException ex)
@@ -133,8 +114,7 @@ public class AdminProductosController : ControllerBase
     {
         try
         {
-            var vendedorIds = await ResolverVendedorIdsAsync(cancellationToken);
-            await _productoService.CambiarActivaPresentacionAsync(presentacionId, vendedorIds, request.Activo, cancellationToken);
+            await _productoService.CambiarActivaPresentacionAsync(presentacionId, request.Activo, cancellationToken);
             return NoContent();
         }
         catch (ReglaDeNegocioException ex)
@@ -143,42 +123,10 @@ public class AdminProductosController : ControllerBase
         }
     }
 
-    // null = Administrador (sin filtro, ve todo). Con lista = Vendedor, solo esos negocios.
-    private async Task<IReadOnlyList<int>?> ResolverVendedorIdsAsync(CancellationToken cancellationToken)
-    {
-        if (User.IsInRole("Administrador"))
-        {
-            return null;
-        }
-
-        var usuarioId = _userManager.GetUserId(User)!;
-        return await _accesoVendedorService.ObtenerVendedorIdsAsync(usuarioId, cancellationToken);
-    }
-
-    // Al crear: un Administrador dice para cual vendedor es. Un Vendedor con acceso a uno solo
-    // lo usa por default; si tiene acceso a varios, debe indicar cual (validado contra su lista).
-    private async Task<int?> ResolverVendedorIdParaEscrituraAsync(int? vendedorIdSolicitado, CancellationToken cancellationToken)
-    {
-        if (User.IsInRole("Administrador"))
-        {
-            return vendedorIdSolicitado;
-        }
-
-        var usuarioId = _userManager.GetUserId(User)!;
-        var permitidos = await _accesoVendedorService.ObtenerVendedorIdsAsync(usuarioId, cancellationToken);
-
-        if (vendedorIdSolicitado.HasValue && permitidos.Contains(vendedorIdSolicitado.Value))
-        {
-            return vendedorIdSolicitado;
-        }
-
-        return permitidos.Count == 1 ? permitidos[0] : null;
-    }
-
     private static AdminProductoDto MapearDto(Producto producto) => new(
         producto.Id,
-        producto.VendedorId,
-        producto.Vendedor.Nombre,
+        producto.CategoriaId,
+        producto.Categoria.Nombre,
         producto.Nombre,
         producto.Descripcion,
         producto.Alergenos,

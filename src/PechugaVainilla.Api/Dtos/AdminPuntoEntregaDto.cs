@@ -4,8 +4,6 @@ namespace PechugaVainilla.Api.Dtos;
 
 public record AdminPuntoEntregaDto(
     int Id,
-    int VendedorId,
-    string VendedorNombre,
     string Nombre,
     string Tipo,
     List<string> DiasSemana,
@@ -14,10 +12,10 @@ public record AdminPuntoEntregaDto(
     int DiasAnticipacion,
     string HoraLimitePedido,
     decimal CostoEnvio,
-    bool Activo);
+    bool Activo,
+    List<int> CategoriaIds);
 
 public record GuardarPuntoEntregaRequest(
-    int? VendedorId,
     string Nombre,
     TipoPuntoEntrega Tipo,
     List<string> DiasSemana,
@@ -25,4 +23,5 @@ public record GuardarPuntoEntregaRequest(
     string HoraFin,
     int DiasAnticipacion,
     string HoraLimitePedido,
-    decimal CostoEnvio);
+    decimal CostoEnvio,
+    List<int> CategoriaIds);

@@ -15,117 +15,98 @@ public class PedidoService : IPedidoService
         _context = context;
     }
 
-    public async Task<IReadOnlyList<Pedido>> CrearPedidoAsync(SolicitudCheckout solicitud, string usuarioId, CancellationToken cancellationToken)
+    public async Task<Pedido> CrearPedidoAsync(SolicitudCheckout solicitud, string usuarioId, CancellationToken cancellationToken)
     {
-        if (solicitud.Grupos.Count == 0)
+        if (solicitud.Items.Count == 0)
         {
             throw new ReglaDeNegocioException("El carrito esta vacio.");
         }
 
-        // Mismo CheckoutId para todos los pedidos que salen de esta compra (uno por vendedor).
-        var checkoutId = Guid.NewGuid().ToString("N");
-        var pedidosCreados = new List<Pedido>();
+        var puntoEntrega = await _context.PuntosEntrega
+            .FirstOrDefaultAsync(pe => pe.Id == solicitud.PuntoEntregaId && pe.Activo, cancellationToken)
+            ?? throw new ReglaDeNegocioException("El punto de entrega elegido no es valido.");
 
-        foreach (var grupo in solicitud.Grupos)
+        ValidarDiaYHora(puntoEntrega, solicitud.FechaEntrega, solicitud.HoraEntrega);
+
+        var pedido = new Pedido
         {
-            if (grupo.Items.Count == 0)
+            UsuarioId = usuarioId,
+            NombreCliente = solicitud.NombreCliente,
+            WhatsApp = solicitud.WhatsApp,
+            PuntoEntregaId = puntoEntrega.Id,
+            PuntoEntrega = puntoEntrega,
+            FechaEntrega = solicitud.FechaEntrega,
+            HoraEntrega = solicitud.HoraEntrega,
+            DetalleEntrega = solicitud.DetalleEntrega,
+        };
+
+        var total = 0m;
+
+        foreach (var item in solicitud.Items)
+        {
+            if (item.Cantidad <= 0)
             {
-                throw new ReglaDeNegocioException("Cada grupo del carrito debe tener al menos un producto.");
+                throw new ReglaDeNegocioException("La cantidad debe ser mayor a cero.");
             }
 
-            var vendedor = await _context.Vendedores.FirstOrDefaultAsync(v => v.Id == grupo.VendedorId && v.Activo, cancellationToken)
-                ?? throw new ReglaDeNegocioException("El vendedor ya no esta disponible.");
+            var presentacion = await _context.Presentaciones
+                .Include(pr => pr.Producto)
+                .FirstOrDefaultAsync(
+                    pr => pr.Id == item.PresentacionId && pr.ProductoId == item.ProductoId && pr.Activo,
+                    cancellationToken)
+                ?? throw new ReglaDeNegocioException("Un producto del carrito ya no esta disponible.");
 
-            var puntoEntrega = await _context.PuntosEntrega
-                .FirstOrDefaultAsync(pe => pe.Id == grupo.PuntoEntregaId && pe.VendedorId == grupo.VendedorId && pe.Activo, cancellationToken)
-                ?? throw new ReglaDeNegocioException("El punto de entrega elegido no es valido para ese vendedor.");
-
-            ValidarDiaYHora(puntoEntrega, grupo.FechaEntrega, grupo.HoraEntrega);
-
-            var pedido = new Pedido
+            if (!presentacion.Producto.Activo)
             {
-                CheckoutId = checkoutId,
-                UsuarioId = usuarioId,
-                NombreCliente = solicitud.NombreCliente,
-                WhatsApp = solicitud.WhatsApp,
-                VendedorId = vendedor.Id,
-                Vendedor = vendedor,
-                PuntoEntregaId = puntoEntrega.Id,
-                PuntoEntrega = puntoEntrega,
-                FechaEntrega = grupo.FechaEntrega,
-                HoraEntrega = grupo.HoraEntrega,
-                DetalleEntrega = solicitud.DetalleEntrega,
-            };
-
-            var totalGrupo = 0m;
-
-            foreach (var item in grupo.Items)
-            {
-                if (item.Cantidad <= 0)
-                {
-                    throw new ReglaDeNegocioException("La cantidad debe ser mayor a cero.");
-                }
-
-                var presentacion = await _context.Presentaciones
-                    .Include(pr => pr.Producto)
-                    .FirstOrDefaultAsync(
-                        pr => pr.Id == item.PresentacionId && pr.ProductoId == item.ProductoId && pr.Activo,
-                        cancellationToken)
-                    ?? throw new ReglaDeNegocioException("Un producto del carrito ya no esta disponible.");
-
-                if (!presentacion.Producto.Activo || presentacion.Producto.VendedorId != grupo.VendedorId)
-                {
-                    throw new ReglaDeNegocioException("Un producto del carrito ya no esta disponible.");
-                }
-
-                if (presentacion.Producto.MaxPorDia.HasValue)
-                {
-                    var yaVendido = await _context.PedidoDetalles
-                        .Where(pd => pd.ProductoId == item.ProductoId
-                            && pd.Pedido.FechaEntrega == grupo.FechaEntrega
-                            && pd.Pedido.Estado != EstadoPedido.Cancelado)
-                        .SumAsync(pd => (int?)pd.Cantidad, cancellationToken) ?? 0;
-
-                    if (yaVendido + item.Cantidad > presentacion.Producto.MaxPorDia.Value)
-                    {
-                        throw new ReglaDeNegocioException(
-                            $"Ya no hay suficiente '{presentacion.Producto.Nombre}' disponible para ese dia.");
-                    }
-                }
-
-                pedido.Detalles.Add(new PedidoDetalle
-                {
-                    Pedido = pedido,
-                    ProductoId = presentacion.ProductoId,
-                    PresentacionId = presentacion.Id,
-                    NombreProducto = $"{presentacion.Producto.Nombre} ({presentacion.Nombre})",
-                    PrecioUnitario = presentacion.Precio, // precio del servidor, nunca el que mande el navegador
-                    Cantidad = item.Cantidad,
-                    Notas = item.Notas,
-                });
-
-                totalGrupo += presentacion.Precio * item.Cantidad;
+                throw new ReglaDeNegocioException("Un producto del carrito ya no esta disponible.");
             }
 
-            totalGrupo += puntoEntrega.CostoEnvio;
-            pedido.Total = totalGrupo;
+            if (presentacion.Producto.MaxPorDia.HasValue)
+            {
+                var yaVendido = await _context.PedidoDetalles
+                    .Where(pd => pd.ProductoId == item.ProductoId
+                        && pd.Pedido.FechaEntrega == solicitud.FechaEntrega
+                        && pd.Pedido.Estado != EstadoPedido.Cancelado)
+                    .SumAsync(pd => (int?)pd.Cantidad, cancellationToken) ?? 0;
 
-            pedido.Pago = new Pago
+                if (yaVendido + item.Cantidad > presentacion.Producto.MaxPorDia.Value)
+                {
+                    throw new ReglaDeNegocioException(
+                        $"Ya no hay suficiente '{presentacion.Producto.Nombre}' disponible para ese dia.");
+                }
+            }
+
+            pedido.Detalles.Add(new PedidoDetalle
             {
                 Pedido = pedido,
-                Metodo = solicitud.MetodoPago,
-                // Sin pasarela todavia (Etapa 4): efectivo se cobra al entregar, transferencia se confirma a mano.
-                Estado = solicitud.MetodoPago == MetodoPago.Efectivo ? EstadoPago.PorCobrar : EstadoPago.PorConfirmar,
-                Monto = totalGrupo,
-            };
+                ProductoId = presentacion.ProductoId,
+                PresentacionId = presentacion.Id,
+                CategoriaId = presentacion.Producto.CategoriaId,
+                NombreProducto = $"{presentacion.Producto.Nombre} ({presentacion.Nombre})",
+                PrecioUnitario = presentacion.Precio, // precio del servidor, nunca el que mande el navegador
+                Cantidad = item.Cantidad,
+                Notas = item.Notas,
+            });
 
-            _context.Pedidos.Add(pedido);
-            pedidosCreados.Add(pedido);
+            total += presentacion.Precio * item.Cantidad;
         }
 
+        total += puntoEntrega.CostoEnvio;
+        pedido.Total = total;
+
+        pedido.Pago = new Pago
+        {
+            Pedido = pedido,
+            Metodo = solicitud.MetodoPago,
+            // Sin pasarela todavia (Etapa 4): efectivo se cobra al entregar, transferencia se confirma a mano.
+            Estado = solicitud.MetodoPago == MetodoPago.Efectivo ? EstadoPago.PorCobrar : EstadoPago.PorConfirmar,
+            Monto = total,
+        };
+
+        _context.Pedidos.Add(pedido);
         await _context.SaveChangesAsync(cancellationToken);
 
-        return pedidosCreados;
+        return pedido;
     }
 
     public async Task<IReadOnlyList<Pedido>> ObtenerMisPedidosAsync(string usuarioId, CancellationToken cancellationToken)
@@ -144,28 +125,23 @@ public class PedidoService : IPedidoService
             .FirstOrDefaultAsync(p => p.Id == id && p.UsuarioId == usuarioId, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Pedido>> ObtenerPorVendedorAsync(IReadOnlyList<int>? vendedorIdsPermitidos, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<Pedido>> ObtenerTodosAsync(CancellationToken cancellationToken)
     {
-        var query = ConsultaConDetalles();
-
-        if (vendedorIdsPermitidos is not null)
-        {
-            query = query.Where(p => vendedorIdsPermitidos.Contains(p.VendedorId));
-        }
-
-        return await query.OrderByDescending(p => p.CreadoEn).ToListAsync(cancellationToken);
+        return await ConsultaConDetalles()
+            .OrderByDescending(p => p.CreadoEn)
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task CambiarEstadoAsync(int id, IReadOnlyList<int>? vendedorIdsPermitidos, EstadoPedido nuevoEstado, CancellationToken cancellationToken)
+    public async Task CambiarEstadoAsync(int id, EstadoPedido nuevoEstado, CancellationToken cancellationToken)
     {
-        var pedido = await ObtenerConPermisoAsync(id, vendedorIdsPermitidos, cancellationToken);
+        var pedido = await ObtenerOFallarAsync(id, cancellationToken);
         pedido.Estado = nuevoEstado;
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task CambiarEstadoPagoAsync(int id, IReadOnlyList<int>? vendedorIdsPermitidos, EstadoPago nuevoEstado, CancellationToken cancellationToken)
+    public async Task CambiarEstadoPagoAsync(int id, EstadoPago nuevoEstado, CancellationToken cancellationToken)
     {
-        var pedido = await ObtenerConPermisoAsync(id, vendedorIdsPermitidos, cancellationToken);
+        var pedido = await ObtenerOFallarAsync(id, cancellationToken);
 
         if (pedido.Pago is null)
         {
@@ -181,34 +157,19 @@ public class PedidoService : IPedidoService
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<int> ContarNuevosAsync(IReadOnlyList<int>? vendedorIdsPermitidos, CancellationToken cancellationToken)
+    public async Task<int> ContarNuevosAsync(CancellationToken cancellationToken)
     {
-        var query = _context.Pedidos.Where(p => p.Estado == EstadoPedido.Nuevo);
-
-        if (vendedorIdsPermitidos is not null)
-        {
-            query = query.Where(p => vendedorIdsPermitidos.Contains(p.VendedorId));
-        }
-
-        return await query.CountAsync(cancellationToken);
+        return await _context.Pedidos.CountAsync(p => p.Estado == EstadoPedido.Nuevo, cancellationToken);
     }
 
-    private async Task<Pedido> ObtenerConPermisoAsync(int id, IReadOnlyList<int>? vendedorIdsPermitidos, CancellationToken cancellationToken)
+    private async Task<Pedido> ObtenerOFallarAsync(int id, CancellationToken cancellationToken)
     {
-        var pedido = await ConsultaConDetalles().FirstOrDefaultAsync(p => p.Id == id, cancellationToken)
+        return await ConsultaConDetalles().FirstOrDefaultAsync(p => p.Id == id, cancellationToken)
             ?? throw new ReglaDeNegocioException("El pedido no existe.");
-
-        if (vendedorIdsPermitidos is not null && !vendedorIdsPermitidos.Contains(pedido.VendedorId))
-        {
-            throw new ReglaDeNegocioException("No tienes permiso sobre este pedido.");
-        }
-
-        return pedido;
     }
 
     private IQueryable<Pedido> ConsultaConDetalles() =>
         _context.Pedidos
-            .Include(p => p.Vendedor)
             .Include(p => p.PuntoEntrega)
             .Include(p => p.Detalles)
             .Include(p => p.Pago);

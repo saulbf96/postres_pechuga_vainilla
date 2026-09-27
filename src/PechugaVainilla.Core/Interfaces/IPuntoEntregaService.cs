@@ -11,19 +11,20 @@ public record DatosPuntoEntrega(
     TimeOnly HoraFin,
     int DiasAnticipacion,
     TimeOnly HoraLimitePedido,
-    decimal CostoEnvio);
+    decimal CostoEnvio,
+    IReadOnlyList<int> CategoriaIds);
 
 public interface IPuntoEntregaService
 {
-    // Publico: solo activos.
-    Task<IReadOnlyList<PuntoEntrega>> ObtenerActivosAsync(int? vendedorId, CancellationToken cancellationToken);
+    // Publico: solo activos, opcionalmente filtrado por categoria (para el checkout).
+    Task<IReadOnlyList<PuntoEntrega>> ObtenerActivosAsync(int? categoriaId, CancellationToken cancellationToken);
 
-    // Panel: todos. null = Administrador (sin filtro).
-    Task<IReadOnlyList<PuntoEntrega>> ObtenerTodosAsync(IReadOnlyList<int>? vendedorIdsPermitidos, CancellationToken cancellationToken);
+    // Panel: todos. Cualquier Administrador ve todo, sin filtro.
+    Task<IReadOnlyList<PuntoEntrega>> ObtenerTodosAsync(CancellationToken cancellationToken);
 
-    Task<PuntoEntrega> CrearAsync(int vendedorId, DatosPuntoEntrega datos, CancellationToken cancellationToken);
+    Task<PuntoEntrega> CrearAsync(DatosPuntoEntrega datos, CancellationToken cancellationToken);
 
-    Task ActualizarAsync(int id, IReadOnlyList<int>? vendedorIdsPermitidos, DatosPuntoEntrega datos, CancellationToken cancellationToken);
+    Task ActualizarAsync(int id, DatosPuntoEntrega datos, CancellationToken cancellationToken);
 
-    Task CambiarActivoAsync(int id, IReadOnlyList<int>? vendedorIdsPermitidos, bool activo, CancellationToken cancellationToken);
+    Task CambiarActivoAsync(int id, bool activo, CancellationToken cancellationToken);
 }

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using PechugaVainilla.Api.Dtos;
+using PechugaVainilla.Api.Validacion;
 using PechugaVainilla.Infrastructure.Identity;
 
 namespace PechugaVainilla.Api.Controllers;
@@ -22,6 +23,12 @@ public class AuthController : ControllerBase
     [HttpPost("registro")]
     public async Task<ActionResult<UsuarioDto>> Registro(RegistroRequest request)
     {
+        var errores = ValidacionesUsuario.ValidarDatosBasicos(request.Nombre, request.Email, request.WhatsApp, whatsAppRequerido: true);
+        if (errores.Count > 0)
+        {
+            return BadRequest(new { errores });
+        }
+
         var usuario = new Usuario
         {
             UserName = request.Email,

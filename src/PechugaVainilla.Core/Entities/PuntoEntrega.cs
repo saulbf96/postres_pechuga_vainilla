@@ -6,9 +6,6 @@ public class PuntoEntrega
 {
     public int Id { get; set; }
 
-    public int VendedorId { get; set; }
-    public required Vendedor Vendedor { get; set; }
-
     public required string Nombre { get; set; }
     public TipoPuntoEntrega Tipo { get; set; }
     public DiasSemana DiasSemana { get; set; }
@@ -23,4 +20,7 @@ public class PuntoEntrega
 
     public decimal CostoEnvio { get; set; }
     public bool Activo { get; set; } = true;
+
+    // Navegacion inversa: que categorias se entregan en este punto
+    public ICollection<PuntoEntregaCategoria> Categorias { get; set; } = new List<PuntoEntregaCategoria>();
 }

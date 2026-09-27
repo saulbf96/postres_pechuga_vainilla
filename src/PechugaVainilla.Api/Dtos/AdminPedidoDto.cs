@@ -4,8 +4,6 @@ namespace PechugaVainilla.Api.Dtos;
 
 public record AdminPedidoDto(
     int Id,
-    string CheckoutId,
-    string VendedorNombre,
     string NombreCliente,
     string WhatsAppCliente,
     string PuntoEntregaNombre,

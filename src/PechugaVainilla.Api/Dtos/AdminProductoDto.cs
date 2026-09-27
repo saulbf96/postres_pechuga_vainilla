@@ -4,8 +4,8 @@ public record PresentacionAdminDto(int Id, string Nombre, decimal Precio, bool A
 
 public record AdminProductoDto(
     int Id,
-    int VendedorId,
-    string VendedorNombre,
+    int CategoriaId,
+    string CategoriaNombre,
     string Nombre,
     string? Descripcion,
     string? Alergenos,
@@ -17,7 +17,7 @@ public record AdminProductoDto(
 public record PresentacionRequest(string Nombre, decimal Precio);
 
 public record CrearProductoRequest(
-    int? VendedorId,
+    int CategoriaId,
     string Nombre,
     string? Descripcion,
     string? Alergenos,

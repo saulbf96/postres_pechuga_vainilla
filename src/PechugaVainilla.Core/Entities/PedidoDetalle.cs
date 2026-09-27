@@ -9,6 +9,7 @@ public class PedidoDetalle
 
     public int ProductoId { get; set; }
     public int PresentacionId { get; set; }
+    public int CategoriaId { get; set; }
 
     // Nombre y precio se copian al momento de la compra: si el producto cambia de nombre
     // o de precio despues, este pedido ya hecho no se altera (regla de CLAUDE.md).

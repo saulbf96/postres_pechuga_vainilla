@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PechugaVainilla.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using PechugaVainilla.Infrastructure.Data;
 namespace PechugaVainilla.Infrastructure.Migrations
 {
     [DbContext(typeof(PechugaVainillaDbContext))]
-    partial class PechugaVainillaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260920013217_RenombrarTablasIdentity")]
+    partial class RenombrarTablasIdentity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -155,7 +158,7 @@ namespace PechugaVainilla.Infrastructure.Migrations
                     b.ToTable("UsuarioTokens", (string)null);
                 });
 
-            modelBuilder.Entity("PechugaVainilla.Core.Entities.Categoria", b =>
+            modelBuilder.Entity("PechugaVainilla.Core.Entities.AsignacionVendedor", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -163,46 +166,34 @@ namespace PechugaVainilla.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("Activa")
+                    b.Property<bool>("Activo")
                         .HasColumnType("bit");
 
-                    b.Property<string>("Color")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("ColorSuave")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("Descripcion")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("FotoRuta")
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
-
-                    b.Property<string>("Nombre")
+                    b.Property<string>("DiasSemana")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<int>("Orden")
+                    b.Property<TimeOnly>("HoraFin")
+                        .HasColumnType("time");
+
+                    b.Property<TimeOnly>("HoraInicio")
+                        .HasColumnType("time");
+
+                    b.Property<string>("UsuarioId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("VendedorId")
                         .HasColumnType("int");
-
-                    b.Property<string>("Slug")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Slug")
-                        .IsUnique();
+                    b.HasIndex("UsuarioId");
 
-                    b.ToTable("Categorias");
+                    b.HasIndex("VendedorId");
+
+                    b.ToTable("AsignacionesVendedor");
                 });
 
             modelBuilder.Entity("PechugaVainilla.Core.Entities.Pago", b =>
@@ -212,6 +203,9 @@ namespace PechugaVainilla.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CobradoPorVendedorId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Estado")
                         .IsRequired()
@@ -253,6 +247,11 @@ namespace PechugaVainilla.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CheckoutId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.Property<DateTime>("CreadoEn")
                         .HasColumnType("datetime2");
 
@@ -286,6 +285,9 @@ namespace PechugaVainilla.Infrastructure.Migrations
                     b.Property<string>("UsuarioId")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int>("VendedorId")
+                        .HasColumnType("int");
+
                     b.Property<string>("WhatsApp")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -293,9 +295,13 @@ namespace PechugaVainilla.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CheckoutId");
+
                     b.HasIndex("PuntoEntregaId");
 
                     b.HasIndex("UsuarioId");
+
+                    b.HasIndex("VendedorId");
 
                     b.ToTable("Pedidos");
                 });
@@ -309,9 +315,6 @@ namespace PechugaVainilla.Infrastructure.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("Cantidad")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CategoriaId")
                         .HasColumnType("int");
 
                     b.Property<string>("NombreProducto")
@@ -388,9 +391,6 @@ namespace PechugaVainilla.Infrastructure.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 
-                    b.Property<int>("CategoriaId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Descripcion")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -407,9 +407,12 @@ namespace PechugaVainilla.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int>("VendedorId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoriaId");
+                    b.HasIndex("VendedorId");
 
                     b.ToTable("Productos");
                 });
@@ -456,24 +459,57 @@ namespace PechugaVainilla.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<int>("VendedorId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("VendedorId");
 
                     b.ToTable("PuntosEntrega");
                 });
 
-            modelBuilder.Entity("PechugaVainilla.Core.Entities.PuntoEntregaCategoria", b =>
+            modelBuilder.Entity("PechugaVainilla.Core.Entities.Vendedor", b =>
                 {
-                    b.Property<int>("PuntoEntregaId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("CategoriaId")
-                        .HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.HasKey("PuntoEntregaId", "CategoriaId");
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
 
-                    b.HasIndex("CategoriaId");
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
-                    b.ToTable("PuntosEntregaCategorias");
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("UsuarioId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("WhatsApp")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("Vendedores");
                 });
 
             modelBuilder.Entity("PechugaVainilla.Infrastructure.Identity.Usuario", b =>
@@ -596,6 +632,23 @@ namespace PechugaVainilla.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("PechugaVainilla.Core.Entities.AsignacionVendedor", b =>
+                {
+                    b.HasOne("PechugaVainilla.Infrastructure.Identity.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PechugaVainilla.Core.Entities.Vendedor", "Vendedor")
+                        .WithMany()
+                        .HasForeignKey("VendedorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Vendedor");
+                });
+
             modelBuilder.Entity("PechugaVainilla.Core.Entities.Pago", b =>
                 {
                     b.HasOne("PechugaVainilla.Core.Entities.Pedido", "Pedido")
@@ -620,7 +673,15 @@ namespace PechugaVainilla.Infrastructure.Migrations
                         .HasForeignKey("UsuarioId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("PechugaVainilla.Core.Entities.Vendedor", "Vendedor")
+                        .WithMany()
+                        .HasForeignKey("VendedorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("PuntoEntrega");
+
+                    b.Navigation("Vendedor");
                 });
 
             modelBuilder.Entity("PechugaVainilla.Core.Entities.PedidoDetalle", b =>
@@ -647,39 +708,32 @@ namespace PechugaVainilla.Infrastructure.Migrations
 
             modelBuilder.Entity("PechugaVainilla.Core.Entities.Producto", b =>
                 {
-                    b.HasOne("PechugaVainilla.Core.Entities.Categoria", "Categoria")
+                    b.HasOne("PechugaVainilla.Core.Entities.Vendedor", "Vendedor")
                         .WithMany("Productos")
-                        .HasForeignKey("CategoriaId")
+                        .HasForeignKey("VendedorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Categoria");
+                    b.Navigation("Vendedor");
                 });
 
-            modelBuilder.Entity("PechugaVainilla.Core.Entities.PuntoEntregaCategoria", b =>
+            modelBuilder.Entity("PechugaVainilla.Core.Entities.PuntoEntrega", b =>
                 {
-                    b.HasOne("PechugaVainilla.Core.Entities.Categoria", "Categoria")
+                    b.HasOne("PechugaVainilla.Core.Entities.Vendedor", "Vendedor")
                         .WithMany("PuntosEntrega")
-                        .HasForeignKey("CategoriaId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("VendedorId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("PechugaVainilla.Core.Entities.PuntoEntrega", "PuntoEntrega")
-                        .WithMany("Categorias")
-                        .HasForeignKey("PuntoEntregaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Categoria");
-
-                    b.Navigation("PuntoEntrega");
+                    b.Navigation("Vendedor");
                 });
 
-            modelBuilder.Entity("PechugaVainilla.Core.Entities.Categoria", b =>
+            modelBuilder.Entity("PechugaVainilla.Core.Entities.Vendedor", b =>
                 {
-                    b.Navigation("Productos");
-
-                    b.Navigation("PuntosEntrega");
+                    b.HasOne("PechugaVainilla.Infrastructure.Identity.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("PechugaVainilla.Core.Entities.Pedido", b =>
@@ -694,9 +748,11 @@ namespace PechugaVainilla.Infrastructure.Migrations
                     b.Navigation("Presentaciones");
                 });
 
-            modelBuilder.Entity("PechugaVainilla.Core.Entities.PuntoEntrega", b =>
+            modelBuilder.Entity("PechugaVainilla.Core.Entities.Vendedor", b =>
                 {
-                    b.Navigation("Categorias");
+                    b.Navigation("Productos");
+
+                    b.Navigation("PuntosEntrega");
                 });
 #pragma warning restore 612, 618
         }

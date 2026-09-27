@@ -8,6 +8,6 @@ public record ProductoDto(
     string? Descripcion,
     string? Alergenos,
     string? FotoRuta,
-    int VendedorId,
-    string VendedorNombre,
+    int CategoriaId,
+    string CategoriaNombre,
     List<PresentacionDto> Presentaciones);

@@ -26,28 +26,25 @@ public class PedidosController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<IReadOnlyList<PedidoDto>>> Crear(CheckoutRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<PedidoDto>> Crear(CheckoutRequest request, CancellationToken cancellationToken)
     {
         var usuarioId = _userManager.GetUserId(User)!;
 
         var solicitud = new SolicitudCheckout(
             request.NombreCliente,
             request.WhatsApp,
+            request.PuntoEntregaId,
+            request.FechaEntrega,
+            request.HoraEntrega,
             request.DetalleEntrega,
             request.MetodoPago,
-            request.Grupos.Select(g => new GrupoCheckout(
-                g.VendedorId,
-                g.PuntoEntregaId,
-                g.FechaEntrega,
-                g.HoraEntrega,
-                g.Items.Select(i => new ItemCarrito(i.ProductoId, i.PresentacionId, i.Cantidad, i.Notas)).ToList()
-            )).ToList()
+            request.Items.Select(i => new ItemCarrito(i.ProductoId, i.PresentacionId, i.Cantidad, i.Notas)).ToList()
         );
 
         try
         {
-            var pedidos = await _pedidoService.CrearPedidoAsync(solicitud, usuarioId, cancellationToken);
-            return Ok(pedidos.Select(MapearDto).ToList());
+            var pedido = await _pedidoService.CrearPedidoAsync(solicitud, usuarioId, cancellationToken);
+            return Ok(MapearDto(pedido));
         }
         catch (ReglaDeNegocioException ex)
         {
@@ -79,8 +76,6 @@ public class PedidosController : ControllerBase
 
     private static PedidoDto MapearDto(Pedido pedido) => new(
         pedido.Id,
-        pedido.CheckoutId,
-        pedido.Vendedor.Nombre,
         pedido.PuntoEntrega.Nombre,
         pedido.FechaEntrega,
         pedido.HoraEntrega,
@@ -88,6 +83,6 @@ public class PedidosController : ControllerBase
         pedido.Total,
         pedido.Estado.ToString(),
         pedido.Pago?.Estado.ToString() ?? "Pendiente",
-        pedido.Detalles.Select(d => new PedidoDetalleDto(d.Id, d.NombreProducto, d.PrecioUnitario, d.Cantidad, d.Notas)).ToList()
+        pedido.Detalles.Select(d => new PedidoDetalleDto(d.Id, d.NombreProducto, d.CategoriaId, d.PrecioUnitario, d.Cantidad, d.Notas)).ToList()
     );
 }

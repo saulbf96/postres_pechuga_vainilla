@@ -16,7 +16,4 @@ public class Pago
     // Id de la transaccion en la pasarela (se llena en la Etapa 4, con el webhook)
     public string? ReferenciaProveedor { get; set; }
     public DateTime? PagadoEn { get; set; }
-
-    // Que vendedor recibio el efectivo/transferencia, para los cortes (Etapa 3)
-    public int? CobradoPorVendedorId { get; set; }
 }

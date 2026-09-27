@@ -1,43 +1,35 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using PechugaVainilla.Api.Dtos;
 using PechugaVainilla.Core.Entities;
 using PechugaVainilla.Core.Interfaces;
-using PechugaVainilla.Infrastructure.Identity;
 
 namespace PechugaVainilla.Api.Controllers.Admin;
 
 [ApiController]
 [Route("api/v1/admin/pedidos")]
-[Authorize(Roles = "Administrador,Vendedor")]
+[Authorize(Roles = "Administrador")]
 public class AdminPedidosController : ControllerBase
 {
     private readonly IPedidoService _pedidoService;
-    private readonly IAccesoVendedorService _accesoVendedorService;
-    private readonly UserManager<Usuario> _userManager;
 
-    public AdminPedidosController(IPedidoService pedidoService, IAccesoVendedorService accesoVendedorService, UserManager<Usuario> userManager)
+    public AdminPedidosController(IPedidoService pedidoService)
     {
         _pedidoService = pedidoService;
-        _accesoVendedorService = accesoVendedorService;
-        _userManager = userManager;
     }
 
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<AdminPedidoDto>>> Get(CancellationToken cancellationToken)
     {
-        var vendedorIds = await ResolverVendedorIdsAsync(cancellationToken);
-        var pedidos = await _pedidoService.ObtenerPorVendedorAsync(vendedorIds, cancellationToken);
+        var pedidos = await _pedidoService.ObtenerTodosAsync(cancellationToken);
         return Ok(pedidos.Select(MapearDto).ToList());
     }
 
-    // El "avisito" dentro del panel: cuantos pedidos Nuevo puede ver este usuario ahora mismo.
+    // El "avisito" dentro del panel: cuantos pedidos Nuevo hay ahora mismo.
     [HttpGet("nuevos/contar")]
     public async Task<ActionResult<int>> ContarNuevos(CancellationToken cancellationToken)
     {
-        var vendedorIds = await ResolverVendedorIdsAsync(cancellationToken);
-        var cantidad = await _pedidoService.ContarNuevosAsync(vendedorIds, cancellationToken);
+        var cantidad = await _pedidoService.ContarNuevosAsync(cancellationToken);
         return Ok(cantidad);
     }
 
@@ -46,8 +38,7 @@ public class AdminPedidosController : ControllerBase
     {
         try
         {
-            var vendedorIds = await ResolverVendedorIdsAsync(cancellationToken);
-            await _pedidoService.CambiarEstadoAsync(id, vendedorIds, request.Estado, cancellationToken);
+            await _pedidoService.CambiarEstadoAsync(id, request.Estado, cancellationToken);
             return NoContent();
         }
         catch (ReglaDeNegocioException ex)
@@ -61,8 +52,7 @@ public class AdminPedidosController : ControllerBase
     {
         try
         {
-            var vendedorIds = await ResolverVendedorIdsAsync(cancellationToken);
-            await _pedidoService.CambiarEstadoPagoAsync(id, vendedorIds, request.Estado, cancellationToken);
+            await _pedidoService.CambiarEstadoPagoAsync(id, request.Estado, cancellationToken);
             return NoContent();
         }
         catch (ReglaDeNegocioException ex)
@@ -71,21 +61,8 @@ public class AdminPedidosController : ControllerBase
         }
     }
 
-    private async Task<IReadOnlyList<int>?> ResolverVendedorIdsAsync(CancellationToken cancellationToken)
-    {
-        if (User.IsInRole("Administrador"))
-        {
-            return null;
-        }
-
-        var usuarioId = _userManager.GetUserId(User)!;
-        return await _accesoVendedorService.ObtenerVendedorIdsAsync(usuarioId, cancellationToken);
-    }
-
     private static AdminPedidoDto MapearDto(Pedido pedido) => new(
         pedido.Id,
-        pedido.CheckoutId,
-        pedido.Vendedor.Nombre,
         pedido.NombreCliente,
         pedido.WhatsApp,
         pedido.PuntoEntrega.Nombre,
@@ -95,5 +72,5 @@ public class AdminPedidosController : ControllerBase
         pedido.Total,
         pedido.Estado.ToString(),
         pedido.Pago?.Estado.ToString() ?? "Pendiente",
-        pedido.Detalles.Select(d => new PedidoDetalleDto(d.Id, d.NombreProducto, d.PrecioUnitario, d.Cantidad, d.Notas)).ToList());
+        pedido.Detalles.Select(d => new PedidoDetalleDto(d.Id, d.NombreProducto, d.CategoriaId, d.PrecioUnitario, d.Cantidad, d.Notas)).ToList());
 }

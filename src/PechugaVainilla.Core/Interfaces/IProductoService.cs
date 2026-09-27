@@ -5,7 +5,7 @@ namespace PechugaVainilla.Core.Interfaces;
 public record PresentacionInput(string Nombre, decimal Precio);
 
 public record NuevoProducto(
-    int VendedorId,
+    int CategoriaId,
     string Nombre,
     string? Descripcion,
     string? Alergenos,
@@ -16,23 +16,22 @@ public record EdicionProducto(string Nombre, string? Descripcion, string? Alerge
 
 public interface IProductoService
 {
-    // Publico (catalogo): solo activos, opcionalmente filtrado por vendedor.
-    Task<IReadOnlyList<Producto>> ObtenerActivosAsync(int? vendedorId, CancellationToken cancellationToken);
+    // Publico (catalogo): solo activos, opcionalmente filtrado por categoria.
+    Task<IReadOnlyList<Producto>> ObtenerActivosAsync(int? categoriaId, CancellationToken cancellationToken);
 
-    // Panel: todos (activos e inactivos), para poder reactivarlos.
-    // vendedorIdsPermitidos null = Administrador (sin filtro). Lista = restringido a esos vendedores.
-    Task<IReadOnlyList<Producto>> ObtenerTodosAsync(IReadOnlyList<int>? vendedorIdsPermitidos, CancellationToken cancellationToken);
+    // Panel: todos (activos e inactivos). Cualquier Administrador ve todo, sin filtro.
+    Task<IReadOnlyList<Producto>> ObtenerTodosAsync(CancellationToken cancellationToken);
 
     Task<Producto> CrearAsync(NuevoProducto nuevo, CancellationToken cancellationToken);
 
-    Task ActualizarAsync(int id, IReadOnlyList<int>? vendedorIdsPermitidos, EdicionProducto edicion, CancellationToken cancellationToken);
+    Task ActualizarAsync(int id, EdicionProducto edicion, CancellationToken cancellationToken);
 
-    Task CambiarActivoAsync(int id, IReadOnlyList<int>? vendedorIdsPermitidos, bool activo, CancellationToken cancellationToken);
+    Task CambiarActivoAsync(int id, bool activo, CancellationToken cancellationToken);
 
     // Gestion de presentaciones (tamaños/precios) de un producto ya existente.
-    Task<Presentacion> AgregarPresentacionAsync(int productoId, IReadOnlyList<int>? vendedorIdsPermitidos, PresentacionInput input, CancellationToken cancellationToken);
+    Task<Presentacion> AgregarPresentacionAsync(int productoId, PresentacionInput input, CancellationToken cancellationToken);
 
-    Task EditarPresentacionAsync(int presentacionId, IReadOnlyList<int>? vendedorIdsPermitidos, PresentacionInput input, CancellationToken cancellationToken);
+    Task EditarPresentacionAsync(int presentacionId, PresentacionInput input, CancellationToken cancellationToken);
 
-    Task CambiarActivaPresentacionAsync(int presentacionId, IReadOnlyList<int>? vendedorIdsPermitidos, bool activo, CancellationToken cancellationToken);
+    Task CambiarActivaPresentacionAsync(int presentacionId, bool activo, CancellationToken cancellationToken);
 }

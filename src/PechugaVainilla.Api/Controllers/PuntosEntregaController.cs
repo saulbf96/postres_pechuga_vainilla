@@ -17,13 +17,12 @@ public class PuntosEntregaController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<PuntoEntregaDto>>> Get([FromQuery] int? vendedorId, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<PuntoEntregaDto>>> Get([FromQuery] int? categoriaId, CancellationToken cancellationToken)
     {
-        var puntos = await _puntoEntregaService.ObtenerActivosAsync(vendedorId, cancellationToken);
+        var puntos = await _puntoEntregaService.ObtenerActivosAsync(categoriaId, cancellationToken);
 
         var dtos = puntos.Select(pe => new PuntoEntregaDto(
             pe.Id,
-            pe.VendedorId,
             pe.Nombre,
             pe.Tipo.ToString(),
             DesglosarDias(pe.DiasSemana),
@@ -31,7 +30,8 @@ public class PuntosEntregaController : ControllerBase
             pe.HoraFin.ToString("HH:mm"),
             pe.DiasAnticipacion,
             pe.HoraLimitePedido.ToString("HH:mm"),
-            pe.CostoEnvio
+            pe.CostoEnvio,
+            pe.Categorias.Select(c => c.CategoriaId).ToList()
         )).ToList();
 
         return Ok(dtos);
