@@ -12,4 +12,8 @@ public class Usuario : IdentityUser
     // Contraseña cifrada con la llave ClaveContrasenas de SQL Server, para poder verla desde SQL.
     // El login NO usa esto: sigue usando PasswordHash de Identity.
     public byte[]? PasswordCifrada { get; set; }
+
+    // true = al iniciar sesion debe poner una contraseña nueva antes de usar la app
+    // (usuario recien creado desde el Panel, o contraseña expirada/restablecida por un administrador).
+    public bool DebeCambiarPassword { get; set; }
 }

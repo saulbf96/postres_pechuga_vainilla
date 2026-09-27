@@ -13,6 +13,16 @@ export const authGuard: CanActivateFn = (_route, state) => {
   // carrera al recargar la pagina). El estado real de "quien esta logueado ahora" siempre
   // se lee de la señal auth.usuario(), que login()/registro()/logout() si mantienen al dia.
   return auth.esperarSesionInicial().pipe(
-    map(() => (auth.usuario() ? true : router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } }))),
+    map(() => {
+      const usuario = auth.usuario();
+      if (!usuario) {
+        return router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
+      }
+      // Con la contraseña expirada no entra a ningun lado hasta cambiarla.
+      if (usuario.debeCambiarPassword) {
+        return router.createUrlTree(['/cambiar-password'], { queryParams: { returnUrl: state.url } });
+      }
+      return true;
+    }),
   );
 };

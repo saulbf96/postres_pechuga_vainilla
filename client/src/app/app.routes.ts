@@ -11,11 +11,13 @@ import { PanelPedidos } from './pages/panel-pedidos/panel-pedidos';
 import { PanelProductos } from './pages/panel-productos/panel-productos';
 import { PanelPuntosEntrega } from './pages/panel-puntos-entrega/panel-puntos-entrega';
 import { PanelPerfiles } from './pages/panel-perfiles/panel-perfiles';
+import { CambiarPassword } from './pages/cambiar-password/cambiar-password';
 
 export const routes: Routes = [
   { path: '', component: Catalogo },
   { path: 'login', component: Login },
   { path: 'registro', component: Registro },
+  { path: 'cambiar-password', component: CambiarPassword },
   { path: 'carrito', component: Carrito },
   { path: 'confirmar', component: Confirmar, canActivate: [authGuard] },
   { path: 'mis-pedidos', component: MisPedidos, canActivate: [authGuard] },

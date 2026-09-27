@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PechugaVainilla.Core.Interfaces;
@@ -126,6 +127,28 @@ app.UseStaticFiles();
 // QUE puede hacer. Van en ese orden y ambas antes de MapControllers.
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Quien tiene la contraseña expirada/temporal no puede usar nada que requiera sesion (panel,
+// pedidos...) hasta cambiarla. Las rutas /api/v1/auth quedan libres para poder cambiarla o salir.
+app.Use(async (context, next) =>
+{
+    var requiereSesion = context.GetEndpoint()?.Metadata.GetMetadata<IAuthorizeData>() is not null;
+    var esRutaDeAuth = context.Request.Path.StartsWithSegments("/api/v1/auth");
+
+    if (requiereSesion && !esRutaDeAuth && context.User.Identity?.IsAuthenticated == true)
+    {
+        var userManager = context.RequestServices.GetRequiredService<UserManager<Usuario>>();
+        var usuario = await userManager.GetUserAsync(context.User);
+        if (usuario?.DebeCambiarPassword == true)
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await context.Response.WriteAsJsonAsync(new { mensaje = "Tu contraseña expiró. Escribe una contraseña nueva para continuar." });
+            return;
+        }
+    }
+
+    await next();
+});
 
 app.MapControllers();
 

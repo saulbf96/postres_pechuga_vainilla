@@ -102,9 +102,60 @@ public class AuthController : ControllerBase
         return Ok(await ConstruirUsuarioDto(usuario));
     }
 
+    // Solo para quien tiene la contraseña expirada/temporal: acaba de demostrar quien es al
+    // iniciar sesion, asi que aqui solo pide la nueva.
+    [HttpPost("cambiar-password-expirada")]
+    [Authorize]
+    public async Task<ActionResult<UsuarioDto>> CambiarPasswordExpirada(CambiarPasswordExpiradaRequest request)
+    {
+        var usuario = await _userManager.GetUserAsync(User);
+        if (usuario is null)
+        {
+            return Unauthorized();
+        }
+
+        if (!usuario.DebeCambiarPassword)
+        {
+            return BadRequest(new { mensaje = "Tu contraseña no necesita cambiarse." });
+        }
+
+        if (await _userManager.CheckPasswordAsync(usuario, request.PasswordNueva))
+        {
+            return BadRequest(new { mensaje = "La contraseña nueva debe ser distinta a la anterior." });
+        }
+
+        // Valida la nueva contra la politica antes de quitar la vieja, para no dejarlo sin contraseña.
+        var errores = new List<string>();
+        foreach (var validador in _userManager.PasswordValidators)
+        {
+            var validacion = await validador.ValidateAsync(_userManager, usuario, request.PasswordNueva);
+            errores.AddRange(validacion.Errors.Select(e => e.Description));
+        }
+        if (errores.Count > 0)
+        {
+            return BadRequest(new { mensaje = string.Join(" ", errores) });
+        }
+
+        await _userManager.RemovePasswordAsync(usuario);
+        var resultado = await _userManager.AddPasswordAsync(usuario, request.PasswordNueva);
+        if (!resultado.Succeeded)
+        {
+            return BadRequest(new { mensaje = string.Join(" ", resultado.Errors.Select(e => e.Description)) });
+        }
+
+        usuario.DebeCambiarPassword = false;
+        await _userManager.UpdateAsync(usuario);
+        await _cifradoContrasena.GuardarAsync(usuario.Id, request.PasswordNueva);
+
+        // Cambiar la contraseña cambia el sello de seguridad: se renueva la cookie para no sacarlo.
+        await _signInManager.RefreshSignInAsync(usuario);
+
+        return Ok(await ConstruirUsuarioDto(usuario));
+    }
+
     private async Task<UsuarioDto> ConstruirUsuarioDto(Usuario usuario)
     {
         var roles = await _userManager.GetRolesAsync(usuario);
-        return new UsuarioDto(usuario.Id, usuario.Nombre, usuario.Email!, usuario.PhoneNumber, roles);
+        return new UsuarioDto(usuario.Id, usuario.Nombre, usuario.Email!, usuario.PhoneNumber, roles, usuario.DebeCambiarPassword);
     }
 }

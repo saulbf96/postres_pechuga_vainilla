@@ -10,6 +10,12 @@ export const panelGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   return auth.esperarSesionInicial().pipe(
-    map(() => (auth.usuario()?.roles.includes('Administrador') ? true : router.createUrlTree(['/']))),
+    map(() => {
+      const usuario = auth.usuario();
+      if (usuario?.debeCambiarPassword) {
+        return router.createUrlTree(['/cambiar-password']);
+      }
+      return usuario?.roles.includes('Administrador') ? true : router.createUrlTree(['/']);
+    }),
   );
 };

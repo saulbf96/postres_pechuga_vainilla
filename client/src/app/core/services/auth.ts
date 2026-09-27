@@ -37,6 +37,12 @@ export class AuthService {
       .pipe(tap((usuario) => this.usuario.set(usuario)));
   }
 
+  cambiarPasswordExpirada(passwordNueva: string): Observable<UsuarioDto> {
+    return this.http
+      .post<UsuarioDto>('/api/v1/auth/cambiar-password-expirada', { passwordNueva })
+      .pipe(tap((usuario) => this.usuario.set(usuario)));
+  }
+
   logout(): Observable<void> {
     return this.http.post<void>('/api/v1/auth/logout', {}).pipe(
       // Aunque la llamada al servidor falle (red caida, etc.), igual limpiamos la sesion local -

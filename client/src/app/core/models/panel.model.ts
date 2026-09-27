@@ -89,12 +89,19 @@ export interface PerfilDto {
   email: string;
   whatsApp: string | null;
   roles: string[];
+  debeCambiarPassword: boolean;
 }
 
+// Sin contraseña: el sistema genera una temporal y la regresa al crear.
 export interface CrearUsuarioRequest {
   nombre: string;
   email: string;
   whatsApp: string | null;
-  password: string;
   rol: 'Administrador' | 'Cliente';
+}
+
+// Correo y contraseña de un administrador para autorizar expirar/restablecer contraseñas.
+export interface AutorizacionAdminRequest {
+  emailAdmin: string;
+  passwordAdmin: string;
 }

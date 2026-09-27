@@ -38,8 +38,12 @@ export class Login {
 
     this.enviando.set(true);
     this.auth.login({ email: this.email(), password: this.password() }).subscribe({
-      next: () => {
+      next: (usuario) => {
         const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/';
+        if (usuario.debeCambiarPassword) {
+          this.router.navigate(['/cambiar-password'], { queryParams: { returnUrl } });
+          return;
+        }
         this.router.navigateByUrl(returnUrl);
       },
       error: (err) => {

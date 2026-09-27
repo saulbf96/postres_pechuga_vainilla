@@ -4,4 +4,6 @@ public record RegistroRequest(string Nombre, string Email, string WhatsApp, stri
 
 public record LoginRequest(string Email, string Password);
 
-public record UsuarioDto(string Id, string Nombre, string Email, string? WhatsApp, IList<string> Roles);
+public record UsuarioDto(string Id, string Nombre, string Email, string? WhatsApp, IList<string> Roles, bool DebeCambiarPassword);
+
+public record CambiarPasswordExpiradaRequest(string PasswordNueva);
