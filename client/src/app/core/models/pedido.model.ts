@@ -2,7 +2,6 @@ export type MetodoPago = 'Efectivo' | 'Transferencia';
 
 export interface PuntoEntregaDto {
   id: number;
-  vendedorId: number;
   nombre: string;
   tipo: string;
   diasSemana: string[];
@@ -11,6 +10,7 @@ export interface PuntoEntregaDto {
   diasAnticipacion: number;
   horaLimitePedido: string;
   costoEnvio: number;
+  categoriaIds: number[];
 }
 
 export interface ItemCarritoRequest {
@@ -20,25 +20,22 @@ export interface ItemCarritoRequest {
   notas: string | null;
 }
 
-export interface GrupoCheckoutRequest {
-  vendedorId: number;
-  puntoEntregaId: number;
-  fechaEntrega: string; // yyyy-MM-dd
-  horaEntrega: string; // HH:mm:ss
-  items: ItemCarritoRequest[];
-}
-
+// Un checkout es un solo pedido (ya no se separa por vendedor): una entrega para todo el carrito.
 export interface CheckoutRequest {
   nombreCliente: string;
   whatsApp: string;
+  puntoEntregaId: number;
+  fechaEntrega: string; // yyyy-MM-dd
+  horaEntrega: string; // HH:mm:ss
   detalleEntrega: string | null;
   metodoPago: MetodoPago;
-  grupos: GrupoCheckoutRequest[];
+  items: ItemCarritoRequest[];
 }
 
 export interface PedidoDetalleDto {
   id: number;
   nombreProducto: string;
+  categoriaId: number;
   precioUnitario: number;
   cantidad: number;
   notas: string | null;
@@ -46,8 +43,6 @@ export interface PedidoDetalleDto {
 
 export interface PedidoDto {
   id: number;
-  checkoutId: string;
-  vendedorNombre: string;
   puntoEntregaNombre: string;
   fechaEntrega: string;
   horaEntrega: string;

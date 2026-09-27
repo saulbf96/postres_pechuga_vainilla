@@ -38,8 +38,13 @@ export class AuthService {
   }
 
   logout(): Observable<void> {
-    return this.http
-      .post<void>('/api/v1/auth/logout', {})
-      .pipe(tap(() => this.usuario.set(null)));
+    return this.http.post<void>('/api/v1/auth/logout', {}).pipe(
+      // Aunque la llamada al servidor falle (red caida, etc.), igual limpiamos la sesion local -
+      // el usuario quiere salir YA, no queremos que un error de red lo deje atrapado.
+      tap({
+        next: () => this.usuario.set(null),
+        error: () => this.usuario.set(null),
+      }),
+    );
   }
 }

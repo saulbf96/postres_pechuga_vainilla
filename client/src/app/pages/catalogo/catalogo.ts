@@ -1,9 +1,12 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CatalogoService } from '../../core/services/catalogo';
 import { CarritoService } from '../../core/services/carrito';
-import type { ProductoDto, VendedorDto } from '../../core/models/catalogo.model';
+import type { ProductoDto, CategoriaDto } from '../../core/models/catalogo.model';
 
-type FiltroVendedor = 'todo' | string; // 'todo' o el slug del vendedor (ej. 'vainilla')
+type FiltroCategoria = 'todo' | string; // 'todo' o el slug de la categoria (ej. 'vainilla')
+
+// Numero de WhatsApp del negocio (dato pendiente de llenar, ver docs/PROYECTO.md).
+const NUMERO_WHATSAPP_NEGOCIO = '5215500000000';
 
 @Component({
   imports: [],
@@ -18,11 +21,11 @@ export class Catalogo implements OnInit {
   // Muestra un "Agregado" temporal en el boton cuando se agrega un producto al carrito.
   protected readonly agregadoRecien = signal<number | null>(null);
 
-  protected readonly vendedores = signal<VendedorDto[]>([]);
+  protected readonly categorias = signal<CategoriaDto[]>([]);
   protected readonly productos = signal<ProductoDto[]>([]);
   protected readonly cargando = signal(true);
   protected readonly error = signal(false);
-  protected readonly filtro = signal<FiltroVendedor>('todo');
+  protected readonly filtro = signal<FiltroCategoria>('todo');
 
   // Que presentacion (Chico/Grande/Pieza) esta elegida por producto, antes de pedir por WhatsApp.
   protected readonly presentacionElegida = signal<Record<number, number>>({});
@@ -32,13 +35,13 @@ export class Catalogo implements OnInit {
     if (filtro === 'todo') {
       return this.productos();
     }
-    const vendedor = this.vendedores().find((v) => v.slug === filtro);
-    return vendedor ? this.productos().filter((p) => p.vendedorId === vendedor.id) : this.productos();
+    const categoria = this.categorias().find((c) => c.slug === filtro);
+    return categoria ? this.productos().filter((p) => p.categoriaId === categoria.id) : this.productos();
   });
 
   ngOnInit(): void {
-    this.catalogoService.obtenerVendedores().subscribe({
-      next: (vendedores) => this.vendedores.set(vendedores),
+    this.catalogoService.obtenerCategorias().subscribe({
+      next: (categorias) => this.categorias.set(categorias),
       error: () => this.error.set(true),
     });
 
@@ -63,7 +66,7 @@ export class Catalogo implements OnInit {
     });
   }
 
-  protected cambiarFiltro(filtro: FiltroVendedor): void {
+  protected cambiarFiltro(filtro: FiltroCategoria): void {
     this.filtro.set(filtro);
   }
 
@@ -81,27 +84,26 @@ export class Catalogo implements OnInit {
     return min.toFixed(2);
   }
 
-  // Colores de linea segun docs/PROYECTO.md: Vainilla = rosa suave, Pechuga = verde suave.
-  protected tintePara(vendedorId: number): { fondo: string; texto: string } {
-    const vendedor = this.vendedores().find((v) => v.id === vendedorId);
-    return vendedor?.slug === 'pechuga'
-      ? { fondo: '#E3EADC', texto: '#3F5E3A' }
+  // Colores segun la categoria del producto (salen de la tabla Categorias, ver docs/DISENO.md).
+  protected tintePara(categoriaId: number): { fondo: string; texto: string } {
+    const categoria = this.categorias().find((c) => c.id === categoriaId);
+    return categoria
+      ? { fondo: categoria.colorSuave, texto: categoria.color }
       : { fondo: '#F3DDD6', texto: '#8F2A3F' };
   }
 
   // Arma el link wa.me con el mensaje ya escrito y codificado (nunca se manda sin codificar,
   // porque el texto tiene espacios y simbolos que romperian la URL).
   protected enlaceWhatsApp(producto: ProductoDto): string {
-    const vendedor = this.vendedores().find((v) => v.id === producto.vendedorId);
     const presentacion = this.presentacionActual(producto);
-    if (!vendedor || !presentacion) {
+    if (!presentacion) {
       return '#';
     }
 
     const mensaje =
       `Hola! Quiero pedir: ${producto.nombre} (${presentacion.nombre}) - $${presentacion.precio.toFixed(2)} - Cantidad: 1`;
 
-    return `https://wa.me/${vendedor.whatsApp}?text=${encodeURIComponent(mensaje)}`;
+    return `https://wa.me/${NUMERO_WHATSAPP_NEGOCIO}?text=${encodeURIComponent(mensaje)}`;
   }
 
   protected agregarAlCarrito(producto: ProductoDto): void {
@@ -111,8 +113,8 @@ export class Catalogo implements OnInit {
     }
 
     this.carritoService.agregar({
-      vendedorId: producto.vendedorId,
-      vendedorNombre: producto.vendedorNombre,
+      categoriaId: producto.categoriaId,
+      categoriaNombre: producto.categoriaNombre,
       productoId: producto.id,
       productoNombre: producto.nombre,
       presentacionId: presentacion.id,

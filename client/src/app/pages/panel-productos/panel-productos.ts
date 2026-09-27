@@ -4,7 +4,7 @@ import { PanelService } from '../../core/services/panel';
 import { CatalogoService } from '../../core/services/catalogo';
 import { PanelNav } from '../../shared/panel-nav/panel-nav';
 import type { AdminProductoDto } from '../../core/models/panel.model';
-import type { VendedorDto } from '../../core/models/catalogo.model';
+import type { CategoriaDto } from '../../core/models/catalogo.model';
 
 interface FilaPresentacion {
   nombre: string;
@@ -22,13 +22,13 @@ export class PanelProductos implements OnInit {
   private readonly catalogoService = inject(CatalogoService);
 
   protected readonly productos = signal<AdminProductoDto[]>([]);
-  protected readonly vendedores = signal<VendedorDto[]>([]);
+  protected readonly categorias = signal<CategoriaDto[]>([]);
   protected readonly cargando = signal(true);
   protected readonly mostrarFormulario = signal(false);
   protected readonly error = signal<string | null>(null);
 
   // Formulario "crear producto"
-  protected readonly nuevoVendedorId = signal<number | null>(null);
+  protected readonly nuevaCategoriaId = signal<number | null>(null);
   protected readonly nuevoNombre = signal('');
   protected readonly nuevaDescripcion = signal('');
   protected readonly nuevoMaxPorDia = signal<number | null>(null);
@@ -38,7 +38,7 @@ export class PanelProductos implements OnInit {
   protected readonly nuevaPresentacionPorProducto = signal<Record<number, FilaPresentacion>>({});
 
   ngOnInit(): void {
-    this.catalogoService.obtenerVendedores().subscribe((vendedores) => this.vendedores.set(vendedores));
+    this.catalogoService.obtenerCategorias().subscribe((categorias) => this.categorias.set(categorias));
     this.cargar();
   }
 
@@ -70,8 +70,8 @@ export class PanelProductos implements OnInit {
   protected crearProducto(): void {
     this.error.set(null);
 
-    if (!this.nuevoVendedorId() || !this.nuevoNombre().trim()) {
-      this.error.set('Elige el vendedor y escribe un nombre.');
+    if (!this.nuevaCategoriaId() || !this.nuevoNombre().trim()) {
+      this.error.set('Elige la categoría y escribe un nombre.');
       return;
     }
 
@@ -83,7 +83,7 @@ export class PanelProductos implements OnInit {
 
     this.panelService
       .crearProducto({
-        vendedorId: this.nuevoVendedorId(),
+        categoriaId: this.nuevaCategoriaId()!,
         nombre: this.nuevoNombre(),
         descripcion: this.nuevaDescripcion() || null,
         alergenos: null,

@@ -6,13 +6,17 @@ import type { CheckoutRequest, PedidoDto, PuntoEntregaDto } from '../models/pedi
 export class PedidosService {
   private readonly http = inject(HttpClient);
 
-  obtenerPuntosEntrega(vendedorId: number) {
-    const params = new HttpParams().set('vendedorId', vendedorId);
+  // categoriaId opcional: sin el, trae todos los puntos activos.
+  obtenerPuntosEntrega(categoriaId?: number) {
+    let params = new HttpParams();
+    if (categoriaId !== undefined) {
+      params = params.set('categoriaId', categoriaId);
+    }
     return this.http.get<PuntoEntregaDto[]>('/api/v1/puntos-entrega', { params });
   }
 
   crearPedido(request: CheckoutRequest) {
-    return this.http.post<PedidoDto[]>('/api/v1/pedidos', request);
+    return this.http.post<PedidoDto>('/api/v1/pedidos', request);
   }
 
   obtenerMisPedidos() {

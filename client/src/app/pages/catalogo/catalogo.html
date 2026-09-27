@@ -19,17 +19,17 @@
     >
       Todo
     </button>
-    @for (vendedor of vendedores(); track vendedor.id) {
+    @for (categoria of categorias(); track categoria.id) {
       <button
         type="button"
-        (click)="cambiarFiltro(vendedor.slug)"
+        (click)="cambiarFiltro(categoria.slug)"
         class="h-11 px-5 rounded-full text-[15px] font-semibold transition-colors"
-        [class.bg-fresa]="filtro() === vendedor.slug"
-        [class.text-crema]="filtro() === vendedor.slug"
-        [class.border]="filtro() !== vendedor.slug"
-        [class.border-borde]="filtro() !== vendedor.slug"
+        [class.bg-fresa]="filtro() === categoria.slug"
+        [class.text-crema]="filtro() === categoria.slug"
+        [class.border]="filtro() !== categoria.slug"
+        [class.border-borde]="filtro() !== categoria.slug"
       >
-        {{ vendedor.nombre }}
+        {{ categoria.nombre }}
       </button>
     }
   </div>
@@ -58,8 +58,8 @@
           } @else {
             <div
               class="h-[170px] md:h-[250px] rounded-2xl flex items-center justify-center text-center p-4 text-sm"
-              [style.background]="tintePara(producto.vendedorId).fondo"
-              [style.color]="tintePara(producto.vendedorId).texto"
+              [style.background]="tintePara(producto.categoriaId).fondo"
+              [style.color]="tintePara(producto.categoriaId).texto"
             >
               Foto: {{ producto.nombre }}
             </div>
@@ -72,10 +72,10 @@
 
           <span
             class="self-start inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
-            [style.background]="tintePara(producto.vendedorId).fondo"
-            [style.color]="tintePara(producto.vendedorId).texto"
+            [style.background]="tintePara(producto.categoriaId).fondo"
+            [style.color]="tintePara(producto.categoriaId).texto"
           >
-            {{ producto.vendedorNombre }}
+            {{ producto.categoriaNombre }}
           </span>
 
           <!-- Si hay mas de una presentacion, elegir cual antes de pedir -->

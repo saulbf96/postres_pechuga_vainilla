@@ -7,8 +7,8 @@ export interface PresentacionAdminDto {
 
 export interface AdminProductoDto {
   id: number;
-  vendedorId: number;
-  vendedorNombre: string;
+  categoriaId: number;
+  categoriaNombre: string;
   nombre: string;
   descripcion: string | null;
   alergenos: string | null;
@@ -24,7 +24,7 @@ export interface PresentacionRequest {
 }
 
 export interface CrearProductoRequest {
-  vendedorId: number | null;
+  categoriaId: number;
   nombre: string;
   descripcion: string | null;
   alergenos: string | null;
@@ -41,8 +41,6 @@ export interface EditarProductoRequest {
 
 export interface AdminPuntoEntregaDto {
   id: number;
-  vendedorId: number;
-  vendedorNombre: string;
   nombre: string;
   tipo: string;
   diasSemana: string[];
@@ -52,10 +50,10 @@ export interface AdminPuntoEntregaDto {
   horaLimitePedido: string;
   costoEnvio: number;
   activo: boolean;
+  categoriaIds: number[];
 }
 
 export interface GuardarPuntoEntregaRequest {
-  vendedorId: number | null;
   nombre: string;
   tipo: string;
   diasSemana: string[];
@@ -64,12 +62,11 @@ export interface GuardarPuntoEntregaRequest {
   diasAnticipacion: number;
   horaLimitePedido: string;
   costoEnvio: number;
+  categoriaIds: number[];
 }
 
 export interface AdminPedidoDto {
   id: number;
-  checkoutId: string;
-  vendedorNombre: string;
   nombreCliente: string;
   whatsAppCliente: string;
   puntoEntregaNombre: string;
@@ -79,22 +76,12 @@ export interface AdminPedidoDto {
   total: number;
   estado: string;
   estadoPago: string;
-  detalles: { id: number; nombreProducto: string; precioUnitario: number; cantidad: number; notas: string | null }[];
+  detalles: { id: number; nombreProducto: string; categoriaId: number; precioUnitario: number; cantidad: number; notas: string | null }[];
 }
 
 export const ESTADOS_PEDIDO = ['Nuevo', 'Preparando', 'Listo', 'Entregado', 'Cancelado'] as const;
 export const ESTADOS_PAGO = ['Pendiente', 'Pagado', 'PorConfirmar', 'PorCobrar', 'Cobrado'] as const;
 export const DIAS_SEMANA = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'] as const;
-
-export interface AsignacionDto {
-  id: number;
-  vendedorId: number;
-  vendedorNombre: string;
-  diasSemana: string[];
-  horaInicio: string;
-  horaFin: string;
-  activo: boolean;
-}
 
 export interface PerfilDto {
   id: string;
@@ -102,14 +89,6 @@ export interface PerfilDto {
   email: string;
   whatsApp: string | null;
   roles: string[];
-  asignaciones: AsignacionDto[];
-}
-
-export interface NuevaAsignacionRequest {
-  vendedorId: number;
-  diasSemana: string[];
-  horaInicio: string;
-  horaFin: string;
 }
 
 export interface CrearUsuarioRequest {
@@ -117,6 +96,5 @@ export interface CrearUsuarioRequest {
   email: string;
   whatsApp: string | null;
   password: string;
-  rol: 'Administrador' | 'Vendedor';
-  asignaciones: NuevaAsignacionRequest[];
+  rol: 'Administrador';
 }

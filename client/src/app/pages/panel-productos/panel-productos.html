@@ -13,7 +13,9 @@
   </div>
 
   @if (error()) {
-    <p class="text-fresa text-sm">{{ error() }}</p>
+    <div class="bg-fresa/10 border-2 border-fresa rounded-xl p-4 max-w-xl">
+      <span class="text-fresa font-semibold text-base">⚠ {{ error() }}</span>
+    </div>
   }
 
   @if (mostrarFormulario()) {
@@ -21,15 +23,15 @@
       <h2 class="font-titulo text-xl">Nuevo producto</h2>
 
       <label class="flex flex-col gap-1 text-sm">
-        Vendedor
+        Categoría
         <select
-          [ngModel]="nuevoVendedorId()"
-          (ngModelChange)="nuevoVendedorId.set($event)"
+          [ngModel]="nuevaCategoriaId()"
+          (ngModelChange)="nuevaCategoriaId.set($event)"
           class="h-11 px-4 rounded-xl border border-borde bg-white"
         >
-          <option [ngValue]="null">Elige uno...</option>
-          @for (vendedor of vendedores(); track vendedor.id) {
-            <option [ngValue]="vendedor.id">{{ vendedor.nombre }}</option>
+          <option [ngValue]="null">Elige una...</option>
+          @for (categoria of categorias(); track categoria.id) {
+            <option [ngValue]="categoria.id">{{ categoria.nombre }}</option>
           }
         </select>
       </label>
@@ -110,7 +112,7 @@
       @for (producto of productos(); track producto.id) {
         <article class="border border-borde rounded-2xl p-4 flex flex-col gap-2" [class.opacity-50]="!producto.activo">
           <div class="flex items-center justify-between">
-            <span class="font-titulo text-xl">{{ producto.nombre }} <span class="text-sm text-texto-secundario font-texto">({{ producto.vendedorNombre }})</span></span>
+            <span class="font-titulo text-xl">{{ producto.nombre }} <span class="text-sm text-texto-secundario font-texto">({{ producto.categoriaNombre }})</span></span>
             <button
               type="button"
               (click)="cambiarActivo(producto)"

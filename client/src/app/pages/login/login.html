@@ -1,48 +1,175 @@
-<main class="px-4 md:px-16 py-10 md:py-16 flex flex-col items-center">
-  <form
-    (ngSubmit)="enviar()"
-    class="w-full max-w-sm flex flex-col gap-4 bg-white/60 p-6 md:p-8 rounded-2xl border border-borde"
-  >
-    <h1 class="font-titulo text-3xl mb-1">Entrar</h1>
+<!--
+  Dos layouts distintos (no uno solo "responsive a la fuerza"): en el diseño, celular y
+  escritorio son composiciones diferentes (LoginMovil.dc.html vs Main.dc.html), no el mismo
+  bloque encogido. Comparten el mismo formulario/estado del componente.
+-->
 
-    @if (error()) {
-      <p class="text-fresa text-sm">{{ error() }}</p>
-    }
+<!-- ===== ESCRITORIO (md+): panel fresa con foto en arco + formulario a la derecha ===== -->
+<main class="hidden md:flex min-h-[calc(100vh-76px)]">
+  <div class="bg-fresa w-[45%] flex flex-col justify-between px-14 py-12">
+    <div class="flex items-center gap-3.5">
+      <svg width="48" height="48" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+        <circle cx="32" cy="32" r="30" stroke="#FBF5EA" stroke-width="1.5" />
+        <circle cx="32" cy="32" r="25" stroke="#FBF5EA" stroke-width="0.75" />
+        <text x="32" y="39" text-anchor="middle" font-family="Fraunces, serif" font-style="italic" font-size="21" fill="#FBF5EA">P&amp;V</text>
+      </svg>
+      <span class="font-titulo text-2xl text-crema">Pechuga <span class="italic">&amp;</span> Vainilla</span>
+    </div>
 
-    <label class="flex flex-col gap-1 text-sm">
-      Correo
-      <input
-        type="email"
-        name="email"
-        [ngModel]="email()"
-        (ngModelChange)="email.set($event)"
-        required
-        class="h-11 px-4 rounded-xl border border-borde bg-white"
-      />
-    </label>
+    <div class="self-center w-72 h-80 border-[1.5px] border-crema p-2.5 flex" style="border-radius: 160px 160px 0 0">
+      <div class="flex-1 flex items-center justify-center text-center p-6 text-sm text-fresa bg-rosa" style="border-radius: 150px 150px 0 0">
+        Foto de Vainilla y Pechuga
+      </div>
+    </div>
 
-    <label class="flex flex-col gap-1 text-sm">
-      Contraseña
-      <input
-        type="password"
-        name="password"
-        [ngModel]="password()"
-        (ngModelChange)="password.set($event)"
-        required
-        class="h-11 px-4 rounded-xl border border-borde bg-white"
-      />
-    </label>
+    <div>
+      <p class="font-titulo italic text-3xl leading-tight text-crema max-w-[420px] m-0">Dulce con Vainilla, salado con Pechuga.</p>
+      <p class="mt-3.5 text-sm m-0" style="color:#F0D9D3">Postres y antojos</p>
+    </div>
+  </div>
 
-    <button
-      type="submit"
-      [disabled]="enviando()"
-      class="h-11 rounded-full bg-fresa text-crema text-sm font-semibold disabled:opacity-60"
-    >
-      {{ enviando() ? 'Entrando...' : 'Entrar' }}
-    </button>
+  <div class="flex-1 flex flex-col px-12 py-10">
+    <a routerLink="/" class="self-start inline-flex items-center min-h-11 text-sm text-texto-secundario no-underline">← Volver a la tienda</a>
 
-    <p class="text-sm text-texto-secundario">
-      ¿No tienes cuenta? <a routerLink="/registro" class="text-fresa">Crea una</a>
-    </p>
-  </form>
+    <form (ngSubmit)="enviar()" class="flex-1 flex items-center justify-center">
+      <div class="w-[400px] flex flex-col gap-4">
+        <div class="flex flex-col gap-2">
+          <h1 class="font-titulo font-medium text-4xl text-cacao m-0">Bienvenido de vuelta</h1>
+          <p class="text-base text-texto-secundario m-0">Entra para ver el estado de tus pedidos y pedir más rápido.</p>
+        </div>
+
+        @if (error()) {
+          <div class="bg-fresa/10 border-2 border-fresa rounded-xl p-4">
+            <span class="text-fresa font-semibold text-base">⚠ {{ error() }}</span>
+          </div>
+        }
+
+        <label class="flex flex-col gap-1.5 text-sm font-medium">
+          Correo electrónico
+          <input
+            type="email" name="email-d" placeholder="tucorreo@ejemplo.com"
+            [ngModel]="email()" (ngModelChange)="email.set($event)"
+            class="h-[52px] px-4 rounded-xl border border-borde bg-white text-base font-texto"
+          />
+        </label>
+
+        <label class="flex flex-col gap-1.5 text-sm font-medium">
+          Contraseña
+          <span class="relative flex items-center">
+            <input
+              [type]="mostrarPassword() ? 'text' : 'password'" name="password-d" placeholder="Tu contraseña"
+              [ngModel]="password()" (ngModelChange)="password.set($event)"
+              class="h-[52px] pl-4 pr-14 rounded-xl border border-borde bg-white text-base font-texto w-full"
+            />
+            <button type="button" (click)="mostrarPassword.set(!mostrarPassword())" aria-label="Mostrar contraseña"
+              class="absolute right-1 w-11 h-11 flex items-center justify-center bg-transparent border-0 cursor-pointer text-texto-secundario">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button>
+          </span>
+        </label>
+
+        <button type="submit" [disabled]="enviando()" class="h-[54px] rounded-full bg-fresa text-crema text-base font-semibold border-0 cursor-pointer disabled:opacity-60">
+          {{ enviando() ? 'Entrando...' : 'Entrar' }}
+        </button>
+
+        <div class="flex items-center gap-3.5 text-sm text-texto-secundario">
+          <span class="flex-1 h-px bg-borde"></span><span>o</span><span class="flex-1 h-px bg-borde"></span>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <a routerLink="/" class="h-[54px] rounded-full border-[1.5px] border-hoja text-hoja text-base font-semibold flex items-center justify-center gap-2.5 no-underline">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 20.5l1.7-5.4A8.4 8.4 0 1 1 21 11.5z" />
+            </svg>
+            Pedir sin cuenta por WhatsApp
+          </a>
+          <span class="text-center text-xs text-texto-secundario">Sin crear perfil: tu pedido se manda por chat.</span>
+        </div>
+
+        <p class="text-center text-sm text-texto-secundario m-0">
+          ¿Aún no tienes cuenta? <a routerLink="/registro" class="font-semibold text-fresa">Crear cuenta</a>
+        </p>
+      </div>
+    </form>
+  </div>
+</main>
+
+<!-- ===== CELULAR (< md): encabezado fresa + tarjeta que sube encima ===== -->
+<main class="flex md:hidden flex-col items-center min-h-[calc(100vh-64px)]">
+  <div class="w-full max-w-sm flex flex-col">
+    <div class="bg-fresa px-6 pt-9 pb-14 flex flex-col items-center gap-1.5 text-center">
+      <svg width="56" height="56" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+        <circle cx="32" cy="32" r="30" stroke="#FBF5EA" stroke-width="1.5" />
+        <circle cx="32" cy="32" r="25" stroke="#FBF5EA" stroke-width="0.75" />
+        <text x="32" y="39" text-anchor="middle" font-family="Fraunces, serif" font-style="italic" font-size="21" fill="#FBF5EA">P&amp;V</text>
+      </svg>
+      <span class="font-titulo text-2xl text-crema">Pechuga <span class="italic">&amp;</span> Vainilla</span>
+      <span class="font-titulo italic text-sm" style="color:#F0D9D3">Dulce con Vainilla, salado con Pechuga.</span>
+    </div>
+
+    <form (ngSubmit)="enviar()" class="bg-crema -mt-7 rounded-t-3xl px-6 pt-7 pb-6 flex flex-col gap-3.5">
+      <div class="flex flex-col gap-1.5 mb-1">
+        <h1 class="font-titulo font-medium text-3xl text-cacao m-0">Bienvenido de vuelta</h1>
+        <p class="text-sm text-texto-secundario m-0">Entra para ver tus pedidos.</p>
+      </div>
+
+      @if (error()) {
+        <div class="bg-fresa/10 border-2 border-fresa rounded-xl p-4">
+          <span class="text-fresa font-semibold text-base">⚠ {{ error() }}</span>
+        </div>
+      }
+
+      <label class="flex flex-col gap-1.5 text-sm font-medium">
+        Correo electrónico
+        <input
+          type="email" name="email" placeholder="tucorreo@ejemplo.com"
+          [ngModel]="email()" (ngModelChange)="email.set($event)"
+          class="h-[52px] px-4 rounded-xl border border-borde bg-white text-base font-texto"
+        />
+      </label>
+
+      <label class="flex flex-col gap-1.5 text-sm font-medium">
+        Contraseña
+        <span class="relative flex items-center">
+          <input
+            [type]="mostrarPassword() ? 'text' : 'password'" name="password" placeholder="Tu contraseña"
+            [ngModel]="password()" (ngModelChange)="password.set($event)"
+            class="h-[52px] pl-4 pr-14 rounded-xl border border-borde bg-white text-base font-texto w-full"
+          />
+          <button type="button" (click)="mostrarPassword.set(!mostrarPassword())" aria-label="Mostrar contraseña"
+            class="absolute right-1 w-11 h-11 flex items-center justify-center bg-transparent border-0 cursor-pointer text-texto-secundario">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </button>
+        </span>
+      </label>
+
+      <button type="submit" [disabled]="enviando()" class="h-[54px] rounded-full bg-fresa text-crema text-base font-semibold border-0 cursor-pointer disabled:opacity-60 mt-1">
+        {{ enviando() ? 'Entrando...' : 'Entrar' }}
+      </button>
+
+      <div class="flex items-center gap-3.5 text-sm text-texto-secundario">
+        <span class="flex-1 h-px bg-borde"></span><span>o</span><span class="flex-1 h-px bg-borde"></span>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <a routerLink="/" class="h-[54px] rounded-full border-[1.5px] border-hoja text-hoja text-base font-semibold flex items-center justify-center gap-2.5 no-underline">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 20.5l1.7-5.4A8.4 8.4 0 1 1 21 11.5z" />
+          </svg>
+          Pedir sin cuenta por WhatsApp
+        </a>
+        <span class="text-center text-xs text-texto-secundario">Sin crear perfil: tu pedido se manda por chat.</span>
+      </div>
+
+      <p class="text-center text-sm text-texto-secundario m-0">
+        ¿Aún no tienes cuenta? <a routerLink="/registro" class="font-semibold text-fresa">Crear cuenta</a>
+      </p>
+    </form>
+  </div>
 </main>

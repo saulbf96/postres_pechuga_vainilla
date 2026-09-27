@@ -1,6 +1,6 @@
 export interface ItemCarrito {
-  vendedorId: number;
-  vendedorNombre: string;
+  categoriaId: number;
+  categoriaNombre: string;
   productoId: number;
   productoNombre: string;
   presentacionId: number;
@@ -11,7 +11,7 @@ export interface ItemCarrito {
 }
 
 export interface GrupoCarrito {
-  vendedorId: number;
-  vendedorNombre: string;
+  categoriaId: number;
+  categoriaNombre: string;
   items: ItemCarrito[];
 }

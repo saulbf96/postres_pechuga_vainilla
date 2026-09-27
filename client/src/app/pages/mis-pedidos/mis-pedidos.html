@@ -15,7 +15,7 @@
       @for (pedido of pedidos(); track pedido.id) {
         <article class="border border-borde rounded-2xl p-4 flex flex-col gap-2">
           <div class="flex items-center justify-between">
-            <span class="font-titulo text-xl">{{ pedido.vendedorNombre }}</span>
+            <span class="font-titulo text-xl">{{ pedido.puntoEntregaNombre }}</span>
             <span
               class="px-3 py-1 rounded-full text-xs font-medium"
               [style.background]="colorEstado(pedido.estado).fondo"
@@ -26,7 +26,7 @@
           </div>
 
           <span class="text-sm text-texto-secundario">
-            {{ pedido.puntoEntregaNombre }} · {{ pedido.fechaEntrega }} {{ pedido.horaEntrega }}
+            {{ pedido.fechaEntrega }} {{ pedido.horaEntrega }}
           </span>
 
           <ul class="text-sm list-disc pl-5">

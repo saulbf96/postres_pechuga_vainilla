@@ -4,12 +4,10 @@ import type {
   AdminPedidoDto,
   AdminProductoDto,
   AdminPuntoEntregaDto,
-  AsignacionDto,
   CrearProductoRequest,
   CrearUsuarioRequest,
   EditarProductoRequest,
   GuardarPuntoEntregaRequest,
-  NuevaAsignacionRequest,
   PerfilDto,
   PresentacionAdminDto,
   PresentacionRequest,
@@ -89,13 +87,5 @@ export class PanelService {
 
   crearUsuario(request: CrearUsuarioRequest) {
     return this.http.post<{ id: string }>('/api/v1/admin/perfiles', request);
-  }
-
-  agregarAsignacion(usuarioId: string, request: NuevaAsignacionRequest) {
-    return this.http.post<AsignacionDto>(`/api/v1/admin/perfiles/${usuarioId}/asignaciones`, request);
-  }
-
-  cambiarActivaAsignacion(asignacionId: number, activo: boolean) {
-    return this.http.patch<void>(`/api/v1/admin/perfiles/asignaciones/${asignacionId}/activo`, { activo });
   }
 }

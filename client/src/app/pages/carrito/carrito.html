@@ -10,9 +10,9 @@
     </div>
   } @else {
     <div class="flex flex-col gap-8 max-w-2xl">
-      @for (grupo of carrito.grupos(); track grupo.vendedorId) {
+      @for (grupo of carrito.grupos(); track grupo.categoriaId) {
         <section class="flex flex-col gap-3">
-          <h2 class="font-titulo text-xl">{{ grupo.vendedorNombre }}</h2>
+          <h2 class="font-titulo text-xl">{{ grupo.categoriaNombre }}</h2>
 
           @for (item of grupo.items; track item.presentacionId) {
             <div class="flex items-center justify-between gap-3 py-2 border-b border-borde">
@@ -36,7 +36,7 @@
           }
 
           <div class="flex justify-end font-semibold">
-            Subtotal {{ grupo.vendedorNombre }}: ${{ subtotalGrupo(grupo.items).toFixed(2) }}
+            Subtotal {{ grupo.categoriaNombre }}: ${{ subtotalGrupo(grupo.items).toFixed(2) }}
           </div>
         </section>
       }

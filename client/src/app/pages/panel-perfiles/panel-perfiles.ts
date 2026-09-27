@@ -1,18 +1,8 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PanelService } from '../../core/services/panel';
-import { CatalogoService } from '../../core/services/catalogo';
 import { PanelNav } from '../../shared/panel-nav/panel-nav';
-import { DIAS_SEMANA } from '../../core/models/panel.model';
-import type { NuevaAsignacionRequest, PerfilDto } from '../../core/models/panel.model';
-import type { VendedorDto } from '../../core/models/catalogo.model';
-
-interface FilaAsignacion {
-  vendedorId: number | null;
-  dias: Set<string>;
-  horaInicio: string;
-  horaFin: string;
-}
+import type { PerfilDto } from '../../core/models/panel.model';
 
 @Component({
   imports: [FormsModule, PanelNav],
@@ -22,26 +12,25 @@ interface FilaAsignacion {
 })
 export class PanelPerfiles implements OnInit {
   private readonly panelService = inject(PanelService);
-  private readonly catalogoService = inject(CatalogoService);
 
   protected readonly perfiles = signal<PerfilDto[]>([]);
-  protected readonly vendedores = signal<VendedorDto[]>([]);
   protected readonly cargando = signal(true);
   protected readonly mostrarFormulario = signal(false);
   protected readonly error = signal<string | null>(null);
-  protected readonly diasSemana = DIAS_SEMANA;
 
-  // Formulario "nuevo usuario"
+  // Formulario "nuevo administrador" (solo hay un rol posible para dar de alta desde aqui)
   protected readonly nuevoNombre = signal('');
   protected readonly nuevoEmail = signal('');
   protected readonly nuevoWhatsApp = signal('');
   protected readonly nuevoPassword = signal('');
-  protected readonly nuevoRol = signal<'Administrador' | 'Vendedor'>('Vendedor');
-  protected readonly nuevasAsignaciones = signal<FilaAsignacion[]>([]);
 
   ngOnInit(): void {
-    this.catalogoService.obtenerVendedores().subscribe((vendedores) => this.vendedores.set(vendedores));
     this.cargar();
+  }
+
+  // Filtra mientras escribes: solo digitos, maximo 10 - una letra simplemente no aparece.
+  protected onWhatsAppChange(valor: string): void {
+    this.nuevoWhatsApp.set(valor.replace(/\D/g, '').slice(0, 10));
   }
 
   private cargar(): void {
@@ -55,32 +44,6 @@ export class PanelPerfiles implements OnInit {
     });
   }
 
-  protected agregarFilaAsignacion(): void {
-    this.nuevasAsignaciones.update((actual) => [
-      ...actual,
-      { vendedorId: null, dias: new Set(), horaInicio: '09:00', horaFin: '18:00' },
-    ]);
-  }
-
-  protected quitarFilaAsignacion(index: number): void {
-    this.nuevasAsignaciones.update((actual) => actual.filter((_, i) => i !== index));
-  }
-
-  protected alternarDiaFila(index: number, dia: string): void {
-    this.nuevasAsignaciones.update((actual) =>
-      actual.map((fila, i) => {
-        if (i !== index) return fila;
-        const dias = new Set(fila.dias);
-        dias.has(dia) ? dias.delete(dia) : dias.add(dia);
-        return { ...fila, dias };
-      }),
-    );
-  }
-
-  protected actualizarFilaAsignacion(index: number, cambios: Partial<FilaAsignacion>): void {
-    this.nuevasAsignaciones.update((actual) => actual.map((fila, i) => (i === index ? { ...fila, ...cambios } : fila)));
-  }
-
   protected crearUsuario(): void {
     this.error.set(null);
 
@@ -89,28 +52,13 @@ export class PanelPerfiles implements OnInit {
       return;
     }
 
-    const asignaciones: NuevaAsignacionRequest[] = [];
-    if (this.nuevoRol() === 'Vendedor') {
-      for (const fila of this.nuevasAsignaciones()) {
-        if (fila.vendedorId && fila.dias.size > 0) {
-          asignaciones.push({
-            vendedorId: fila.vendedorId,
-            diasSemana: Array.from(fila.dias),
-            horaInicio: fila.horaInicio,
-            horaFin: fila.horaFin,
-          });
-        }
-      }
-    }
-
     this.panelService
       .crearUsuario({
         nombre: this.nuevoNombre(),
         email: this.nuevoEmail(),
         whatsApp: this.nuevoWhatsApp() || null,
         password: this.nuevoPassword(),
-        rol: this.nuevoRol(),
-        asignaciones,
+        rol: 'Administrador',
       })
       .subscribe({
         next: () => {
@@ -118,15 +66,10 @@ export class PanelPerfiles implements OnInit {
           this.nuevoEmail.set('');
           this.nuevoWhatsApp.set('');
           this.nuevoPassword.set('');
-          this.nuevasAsignaciones.set([]);
           this.mostrarFormulario.set(false);
           this.cargar();
         },
         error: (err) => this.error.set(err.error?.mensaje ?? 'No se pudo crear el usuario.'),
       });
-  }
-
-  protected cambiarActivaAsignacion(asignacionId: number, activoActual: boolean): void {
-    this.panelService.cambiarActivaAsignacion(asignacionId, !activoActual).subscribe(() => this.cargar());
   }
 }

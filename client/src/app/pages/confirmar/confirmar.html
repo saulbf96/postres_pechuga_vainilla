@@ -2,7 +2,9 @@
   <h1 class="font-titulo text-3xl md:text-5xl">Confirmar pedido</h1>
 
   @if (error()) {
-    <p class="text-fresa text-sm">{{ error() }}</p>
+    <div class="bg-fresa/10 border-2 border-fresa rounded-xl p-4">
+      <span class="text-fresa font-semibold text-base">⚠ {{ error() }}</span>
+    </div>
   }
 
   <!-- Datos del cliente -->
@@ -23,9 +25,10 @@
       WhatsApp
       <input
         type="tel"
-        placeholder="521XXXXXXXXXX"
+        placeholder="5512345678"
+        maxlength="10"
         [ngModel]="whatsApp()"
-        (ngModelChange)="whatsApp.set($event)"
+        (ngModelChange)="onWhatsAppChange($event)"
         class="h-11 px-4 rounded-xl border border-borde bg-white"
       />
     </label>
@@ -42,68 +45,79 @@
     </label>
   </section>
 
-  <!-- Un bloque por vendedor -->
-  @for (seleccion of selecciones(); track seleccion.vendedorId) {
-    <section class="flex flex-col gap-3 border border-borde rounded-2xl p-4">
-      <h2 class="font-titulo text-xl">{{ seleccion.vendedorNombre }}</h2>
+  <!-- Resumen del carrito, agrupado por categoria solo para verlo ordenado -->
+  <section class="flex flex-col gap-3 border border-borde rounded-2xl p-4">
+    <h2 class="font-titulo text-xl">Tu pedido</h2>
 
-      <ul class="text-sm text-texto-secundario list-disc pl-5">
-        @for (item of seleccion.items; track item.presentacionId) {
-          <li>{{ item.cantidad }} × {{ item.productoNombre }} ({{ item.presentacionNombre }})</li>
-        }
-      </ul>
-      <div class="text-sm font-semibold">Subtotal: ${{ subtotalGrupo(seleccion.items).toFixed(2) }}</div>
+    @for (grupo of carrito.grupos(); track grupo.categoriaId) {
+      <div class="flex flex-col gap-1">
+        <span class="text-sm font-semibold">{{ grupo.categoriaNombre }}</span>
+        <ul class="text-sm text-texto-secundario list-disc pl-5">
+          @for (item of grupo.items; track item.presentacionId) {
+            <li>{{ item.cantidad }} × {{ item.productoNombre }} ({{ item.presentacionNombre }})</li>
+          }
+        </ul>
+      </div>
+    }
 
-      @if (seleccion.puntosEntrega.length === 0) {
-        <p class="text-sm text-texto-secundario">Cargando puntos de entrega...</p>
-      } @else {
-        <label class="flex flex-col gap-1 text-sm">
-          Punto de entrega
-          <select
-            [ngModel]="seleccion.puntoEntregaId"
-            (ngModelChange)="actualizarCampo(seleccion.vendedorId, { puntoEntregaId: $event })"
+    <div class="text-sm font-semibold pt-2 border-t border-borde">Total: ${{ carrito.totalPrecio().toFixed(2) }}</div>
+  </section>
+
+  <!-- Una sola entrega para todo el pedido -->
+  <section class="flex flex-col gap-3 border border-borde rounded-2xl p-4">
+    <h2 class="font-titulo text-xl">Entrega</h2>
+
+    @if (puntosEntrega().length === 0) {
+      <p class="text-sm text-texto-secundario">
+        No hay un punto de entrega que reciba todas las categorías de tu carrito. Intenta pedir por separado.
+      </p>
+    } @else {
+      <label class="flex flex-col gap-1 text-sm">
+        Punto de entrega
+        <select
+          [ngModel]="puntoEntregaId()"
+          (ngModelChange)="puntoEntregaId.set($event)"
+          class="h-11 px-4 rounded-xl border border-borde bg-white"
+        >
+          @for (punto of puntosEntrega(); track punto.id) {
+            <option [value]="punto.id">
+              {{ punto.nombre }} ({{ punto.costoEnvio > 0 ? ('+$' + punto.costoEnvio.toFixed(2)) : 'sin costo' }})
+            </option>
+          }
+        </select>
+      </label>
+
+      @if (puntoElegido(); as punto) {
+        <p class="text-xs text-texto-secundario">
+          Atiende: {{ punto.diasSemana.join(', ') }} · {{ punto.horaInicio }}–{{ punto.horaFin }}
+          · pide con {{ punto.diasAnticipacion }} día(s) de anticipación, antes de las {{ punto.horaLimitePedido }}
+        </p>
+      }
+
+      <div class="flex gap-3">
+        <label class="flex flex-col gap-1 text-sm flex-1">
+          Fecha
+          <input
+            type="date"
+            [min]="fechaMinima()"
+            [ngModel]="fecha()"
+            (ngModelChange)="fecha.set($event)"
             class="h-11 px-4 rounded-xl border border-borde bg-white"
-          >
-            @for (punto of seleccion.puntosEntrega; track punto.id) {
-              <option [value]="punto.id">
-                {{ punto.nombre }} ({{ punto.costoEnvio > 0 ? ('+$' + punto.costoEnvio.toFixed(2)) : 'sin costo' }})
-              </option>
-            }
-          </select>
+          />
         </label>
 
-        @if (puntoElegido(seleccion); as punto) {
-          <p class="text-xs text-texto-secundario">
-            Atiende: {{ punto.diasSemana.join(', ') }} · {{ punto.horaInicio }}–{{ punto.horaFin }}
-            · pide con {{ punto.diasAnticipacion }} día(s) de anticipación, antes de las {{ punto.horaLimitePedido }}
-          </p>
-        }
-
-        <div class="flex gap-3">
-          <label class="flex flex-col gap-1 text-sm flex-1">
-            Fecha
-            <input
-              type="date"
-              [min]="fechaMinima(seleccion)"
-              [ngModel]="seleccion.fecha"
-              (ngModelChange)="actualizarCampo(seleccion.vendedorId, { fecha: $event })"
-              class="h-11 px-4 rounded-xl border border-borde bg-white"
-            />
-          </label>
-
-          <label class="flex flex-col gap-1 text-sm flex-1">
-            Hora
-            <input
-              type="time"
-              [ngModel]="seleccion.hora"
-              (ngModelChange)="actualizarCampo(seleccion.vendedorId, { hora: $event })"
-              class="h-11 px-4 rounded-xl border border-borde bg-white"
-            />
-          </label>
-        </div>
-      }
-    </section>
-  }
+        <label class="flex flex-col gap-1 text-sm flex-1">
+          Hora
+          <input
+            type="time"
+            [ngModel]="hora()"
+            (ngModelChange)="hora.set($event)"
+            class="h-11 px-4 rounded-xl border border-borde bg-white"
+          />
+        </label>
+      </div>
+    }
+  </section>
 
   <!-- Metodo de pago -->
   <section class="flex flex-col gap-2">

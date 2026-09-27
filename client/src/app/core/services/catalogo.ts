@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
-import type { ProductoDto, VendedorDto } from '../models/catalogo.model';
+import type { ProductoDto, CategoriaDto } from '../models/catalogo.model';
 
 // Service central para leer el catalogo. Un solo lugar que sabe la ruta de la API;
 // el componente no conoce URLs, solo pide datos.
@@ -8,8 +8,8 @@ import type { ProductoDto, VendedorDto } from '../models/catalogo.model';
 export class CatalogoService {
   private readonly http = inject(HttpClient);
 
-  obtenerVendedores() {
-    return this.http.get<VendedorDto[]>('/api/v1/vendedores');
+  obtenerCategorias() {
+    return this.http.get<CategoriaDto[]>('/api/v1/categorias');
   }
 
   obtenerProductos() {

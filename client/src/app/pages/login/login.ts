@@ -18,12 +18,21 @@ export class Login {
   protected readonly password = signal('');
   protected readonly enviando = signal(false);
   protected readonly error = signal<string | null>(null);
+  protected readonly mostrarPassword = signal(false);
 
   protected enviar(): void {
     this.error.set(null);
 
-    if (!this.email().trim() || !this.password()) {
+    if (!this.email().trim() && !this.password()) {
       this.error.set('Escribe tu correo y tu contraseña.');
+      return;
+    }
+    if (!this.email().trim()) {
+      this.error.set('Escribe tu correo.');
+      return;
+    }
+    if (!this.password()) {
+      this.error.set('Escribe tu contraseña.');
       return;
     }
 

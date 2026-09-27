@@ -36,7 +36,7 @@
     @if (auth.usuario()) {
       <button
         type="button"
-        (click)="salir()"
+        (click)="pedirConfirmacionSalir()"
         class="text-cacao bg-transparent border-0 p-0 cursor-pointer text-sm underline"
       >
         Salir
@@ -46,3 +46,33 @@
     }
   </nav>
 </header>
+
+@if (mostrarConfirmacionSalir()) {
+  <div
+    class="fixed inset-0 bg-cacao/40 flex items-center justify-center z-50 px-4"
+    (click)="cancelarSalir()"
+  >
+    <div
+      class="bg-crema rounded-2xl p-6 max-w-xs w-full flex flex-col gap-4 border border-borde"
+      (click)="$event.stopPropagation()"
+    >
+      <p class="font-titulo text-xl text-cacao">¿Seguro que quieres salir?</p>
+      <div class="flex gap-2 justify-end">
+        <button
+          type="button"
+          (click)="cancelarSalir()"
+          class="h-10 px-4 rounded-full border border-borde text-cacao text-sm bg-transparent cursor-pointer"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          (click)="confirmarSalir()"
+          class="h-10 px-4 rounded-full bg-fresa text-crema text-sm font-semibold cursor-pointer"
+        >
+          Sí, salir
+        </button>
+      </div>
+    </div>
+  </div>
+}

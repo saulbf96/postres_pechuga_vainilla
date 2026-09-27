@@ -6,11 +6,14 @@
     <h1 class="font-titulo text-3xl mb-1">Crear cuenta</h1>
 
     @if (errores().length > 0) {
-      <ul class="text-fresa text-sm list-disc pl-5">
-        @for (mensaje of errores(); track mensaje) {
-          <li>{{ mensaje }}</li>
-        }
-      </ul>
+      <div class="bg-fresa/10 border-2 border-fresa rounded-xl p-4 flex flex-col gap-1">
+        <span class="text-fresa font-semibold text-base">⚠ No se pudo crear la cuenta</span>
+        <ul class="text-fresa text-sm list-disc pl-5">
+          @for (mensaje of errores(); track mensaje) {
+            <li>{{ mensaje }}</li>
+          }
+        </ul>
+      </div>
     }
 
     <label class="flex flex-col gap-1 text-sm">
@@ -42,9 +45,10 @@
       <input
         type="tel"
         name="whatsApp"
-        placeholder="521XXXXXXXXXX"
+        placeholder="5512345678"
+        maxlength="10"
         [ngModel]="whatsApp()"
-        (ngModelChange)="whatsApp.set($event)"
+        (ngModelChange)="onWhatsAppChange($event)"
         required
         class="h-11 px-4 rounded-xl border border-borde bg-white"
       />
@@ -61,7 +65,7 @@
         minlength="8"
         class="h-11 px-4 rounded-xl border border-borde bg-white"
       />
-      <span class="text-xs text-texto-secundario">Mínimo 8 caracteres, con al menos un número.</span>
+      <span class="text-xs text-texto-secundario">Mínimo 8 caracteres, con al menos una mayúscula y un número.</span>
     </label>
 
     <button

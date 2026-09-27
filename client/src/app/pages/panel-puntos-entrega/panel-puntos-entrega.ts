@@ -5,7 +5,7 @@ import { CatalogoService } from '../../core/services/catalogo';
 import { PanelNav } from '../../shared/panel-nav/panel-nav';
 import { DIAS_SEMANA } from '../../core/models/panel.model';
 import type { AdminPuntoEntregaDto } from '../../core/models/panel.model';
-import type { VendedorDto } from '../../core/models/catalogo.model';
+import type { CategoriaDto } from '../../core/models/catalogo.model';
 
 @Component({
   imports: [FormsModule, PanelNav],
@@ -18,7 +18,7 @@ export class PanelPuntosEntrega implements OnInit {
   private readonly catalogoService = inject(CatalogoService);
 
   protected readonly puntos = signal<AdminPuntoEntregaDto[]>([]);
-  protected readonly vendedores = signal<VendedorDto[]>([]);
+  protected readonly categorias = signal<CategoriaDto[]>([]);
   protected readonly cargando = signal(true);
   protected readonly mostrarFormulario = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -26,7 +26,7 @@ export class PanelPuntosEntrega implements OnInit {
   protected readonly tipos = ['Domicilio', 'Recoger', 'Campus'];
 
   // Formulario
-  protected readonly nuevoVendedorId = signal<number | null>(null);
+  protected readonly nuevasCategorias = signal<Set<number>>(new Set());
   protected readonly nuevoNombre = signal('');
   protected readonly nuevoTipo = signal('Recoger');
   protected readonly nuevosDias = signal<Set<string>>(new Set());
@@ -37,7 +37,7 @@ export class PanelPuntosEntrega implements OnInit {
   protected readonly nuevoCostoEnvio = signal(0);
 
   ngOnInit(): void {
-    this.catalogoService.obtenerVendedores().subscribe((vendedores) => this.vendedores.set(vendedores));
+    this.catalogoService.obtenerCategorias().subscribe((categorias) => this.categorias.set(categorias));
     this.cargar();
   }
 
@@ -64,17 +64,35 @@ export class PanelPuntosEntrega implements OnInit {
     });
   }
 
+  protected alternarCategoria(categoriaId: number): void {
+    this.nuevasCategorias.update((actual) => {
+      const copia = new Set(actual);
+      if (copia.has(categoriaId)) {
+        copia.delete(categoriaId);
+      } else {
+        copia.add(categoriaId);
+      }
+      return copia;
+    });
+  }
+
+  protected nombresCategorias(categoriaIds: number[]): string {
+    return categoriaIds
+      .map((id) => this.categorias().find((c) => c.id === id)?.nombre)
+      .filter((nombre): nombre is string => !!nombre)
+      .join(', ');
+  }
+
   protected crear(): void {
     this.error.set(null);
 
-    if (!this.nuevoVendedorId() || !this.nuevoNombre().trim() || this.nuevosDias().size === 0) {
-      this.error.set('Elige vendedor, nombre y al menos un día.');
+    if (this.nuevasCategorias().size === 0 || !this.nuevoNombre().trim() || this.nuevosDias().size === 0) {
+      this.error.set('Elige al menos una categoría, un nombre y al menos un día.');
       return;
     }
 
     this.panelService
       .crearPuntoEntrega({
-        vendedorId: this.nuevoVendedorId(),
         nombre: this.nuevoNombre(),
         tipo: this.nuevoTipo(),
         diasSemana: Array.from(this.nuevosDias()),
@@ -83,11 +101,13 @@ export class PanelPuntosEntrega implements OnInit {
         diasAnticipacion: this.nuevosDiasAnticipacion(),
         horaLimitePedido: this.nuevaHoraLimite(),
         costoEnvio: this.nuevoCostoEnvio(),
+        categoriaIds: Array.from(this.nuevasCategorias()),
       })
       .subscribe({
         next: () => {
           this.nuevoNombre.set('');
           this.nuevosDias.set(new Set());
+          this.nuevasCategorias.set(new Set());
           this.mostrarFormulario.set(false);
           this.cargar();
         },

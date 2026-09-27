@@ -13,14 +13,15 @@ export class CarritoService {
   readonly totalItems = computed(() => this.items().reduce((suma, i) => suma + i.cantidad, 0));
   readonly totalPrecio = computed(() => this.items().reduce((suma, i) => suma + i.precioUnitario * i.cantidad, 0));
 
-  // Agrupado por vendedor: el checkout siempre manda un grupo por vendedor (regla de negocio).
+  // Agrupado por categoria, solo para mostrarlo ordenado en el carrito y en confirmar
+  // (el checkout ya manda un solo pedido, sin importar cuantas categorias traiga).
   readonly grupos = computed<GrupoCarrito[]>(() => {
     const mapa = new Map<number, GrupoCarrito>();
     for (const item of this.items()) {
-      if (!mapa.has(item.vendedorId)) {
-        mapa.set(item.vendedorId, { vendedorId: item.vendedorId, vendedorNombre: item.vendedorNombre, items: [] });
+      if (!mapa.has(item.categoriaId)) {
+        mapa.set(item.categoriaId, { categoriaId: item.categoriaId, categoriaNombre: item.categoriaNombre, items: [] });
       }
-      mapa.get(item.vendedorId)!.items.push(item);
+      mapa.get(item.categoriaId)!.items.push(item);
     }
     return Array.from(mapa.values());
   });

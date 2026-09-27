@@ -1,12 +1,15 @@
 // Estas interfaces reflejan exactamente los DTOs que devuelve la API
 // (src/PechugaVainilla.Api/Dtos) - si cambia uno, hay que cambiar el otro.
 
-export interface VendedorDto {
+export interface CategoriaDto {
   id: number;
   nombre: string;
   slug: string;
-  whatsApp: string;
   descripcion: string | null;
+  color: string;
+  colorSuave: string;
+  fotoRuta: string | null;
+  orden: number;
 }
 
 export interface PresentacionDto {
@@ -21,7 +24,7 @@ export interface ProductoDto {
   descripcion: string | null;
   alergenos: string | null;
   fotoRuta: string | null;
-  vendedorId: number;
-  vendedorNombre: string;
+  categoriaId: number;
+  categoriaNombre: string;
   presentaciones: PresentacionDto[];
 }

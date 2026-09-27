@@ -45,12 +45,34 @@ export class Header implements OnInit {
     });
   }
 
-  protected salir(): void {
-    this.auth.logout().subscribe(() => this.router.navigateByUrl('/'));
+  // En vez de confirm() nativo del navegador (que se ve feo, con "localhost dice..."),
+  // mostramos nuestro propio cuadro de confirmacion con el estilo de la marca.
+  protected readonly mostrarConfirmacionSalir = signal(false);
+
+  protected pedirConfirmacionSalir(): void {
+    this.mostrarConfirmacionSalir.set(true);
+  }
+
+  protected cancelarSalir(): void {
+    this.mostrarConfirmacionSalir.set(false);
+  }
+
+  protected confirmarSalir(): void {
+    this.mostrarConfirmacionSalir.set(false);
+
+    // El carrito es del navegador, no de la cuenta - si no lo vaciamos, la siguiente
+    // persona que use este dispositivo veria lo que tu dejaste a medias.
+    this.carrito.vaciar();
+
+    // next Y error navegan - si la llamada al servidor fallara, no queremos que te quedes
+    // atrapado en una pagina del panel a la que ya no deberias tener acceso.
+    this.auth.logout().subscribe({
+      next: () => this.router.navigateByUrl('/'),
+      error: () => this.router.navigateByUrl('/'),
+    });
   }
 
   protected tieneAccesoPanel(): boolean {
-    const roles = this.auth.usuario()?.roles ?? [];
-    return roles.includes('Administrador') || roles.includes('Vendedor');
+    return this.auth.usuario()?.roles.includes('Administrador') ?? false;
   }
 }
