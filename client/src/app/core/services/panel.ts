@@ -91,10 +91,6 @@ export class PanelService {
     return this.http.post<{ id: string; passwordTemporal: string }>('/api/v1/admin/perfiles', request);
   }
 
-  expirarPassword(usuarioId: string, autorizacion: AutorizacionAdminRequest) {
-    return this.http.post<void>(`/api/v1/admin/perfiles/${usuarioId}/expirar-password`, autorizacion);
-  }
-
   restablecerPassword(usuarioId: string, autorizacion: AutorizacionAdminRequest) {
     return this.http.post<{ passwordTemporal: string }>(`/api/v1/admin/perfiles/${usuarioId}/restablecer-password`, autorizacion);
   }

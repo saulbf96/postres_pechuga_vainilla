@@ -87,7 +87,7 @@
         </label>
         <label class="flex items-center gap-2 md:ml-auto">
           <input type="checkbox" name="mostrarInactivos" [ngModel]="mostrarInactivos()" (ngModelChange)="mostrarInactivos.set($event)" />
-          Mostrar inactivos
+          Mostrar eliminados
         </label>
       </div>
     </div>
@@ -100,7 +100,7 @@
             <span class="text-xs text-texto-secundario">
               {{ perfil.roles.join(', ') }}
               @if (!perfil.activo) {
-                · <strong class="text-fresa">Inactivo</strong>
+                · <strong class="text-fresa">Eliminado</strong>
               }
             </span>
           </div>
@@ -118,15 +118,14 @@
               <button type="button" (click)="abrirEdicion(perfil)" class="h-9 px-3 rounded-full border border-borde bg-white text-cacao text-xs font-semibold cursor-pointer">
                 Editar
               </button>
-              <button type="button" (click)="abrirAccion('expirar', perfil)" class="h-9 px-3 rounded-full border border-borde bg-white text-cacao text-xs font-semibold cursor-pointer">
-                Expirar contraseña
-              </button>
-              <button type="button" (click)="abrirAccion('restablecer', perfil)" class="h-9 px-3 rounded-full border border-borde bg-white text-cacao text-xs font-semibold cursor-pointer">
-                Restablecer contraseña
-              </button>
-              <button type="button" (click)="abrirAccion('desactivar', perfil)" class="h-9 px-3 rounded-full border border-fresa bg-white text-fresa text-xs font-semibold cursor-pointer">
-                Desactivar
-              </button>
+              @if (!esYo(perfil)) {
+                <button type="button" (click)="abrirAccion('restablecer', perfil)" class="h-9 px-3 rounded-full border border-borde bg-white text-cacao text-xs font-semibold cursor-pointer">
+                  Restablecer contraseña
+                </button>
+                <button type="button" (click)="abrirAccion('desactivar', perfil)" class="h-9 px-3 rounded-full border border-fresa bg-white text-fresa text-xs font-semibold cursor-pointer">
+                  Eliminar
+                </button>
+              }
             } @else {
               <button type="button" (click)="abrirAccion('reactivar', perfil)" class="h-9 px-3 rounded-full border border-hoja bg-white text-hoja text-xs font-semibold cursor-pointer">
                 Reactivar
@@ -217,14 +216,11 @@
         <h2 class="font-titulo text-xl text-cacao m-0">{{ tituloAccion(accion.tipo) }}</h2>
         <p class="text-sm text-texto-secundario m-0">
           @switch (accion.tipo) {
-            @case ('expirar') {
-              <strong>{{ accion.perfil.nombre }}</strong> seguirá entrando con su contraseña actual, pero se le pedirá una nueva al entrar. No verás ninguna contraseña.
-            }
             @case ('restablecer') {
               Para cuando <strong>{{ accion.perfil.nombre }}</strong> olvidó su contraseña: se genera una temporal que verás para pasársela.
             }
             @case ('desactivar') {
-              <strong>{{ accion.perfil.nombre }}</strong> ya no podrá entrar y se cerrarán sus sesiones. Sus pedidos se conservan y puedes reactivarlo después.
+              <strong>{{ accion.perfil.nombre }}</strong> ya no podrá entrar y se cerrarán sus sesiones. No se borra de verdad: sus pedidos se conservan y puedes reactivarlo después.
             }
             @case ('reactivar') {
               <strong>{{ accion.perfil.nombre }}</strong> podrá volver a entrar con su contraseña.

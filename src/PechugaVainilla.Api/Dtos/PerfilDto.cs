@@ -9,5 +9,5 @@ public record CrearUsuarioRequest(string Nombre, string Email, string? WhatsApp,
 public record EditarUsuarioRequest(string Nombre, string Email, string? WhatsApp, string Rol, string? EmailAdmin, string? PasswordAdmin);
 
 // Correo y contraseña de un administrador para autorizar acciones delicadas
-// (expirar/restablecer contraseña, desactivar/reactivar, cambiar rol).
+// (restablecer contraseña, eliminar/reactivar, cambiar rol).
 public record AutorizacionAdminRequest(string EmailAdmin, string PasswordAdmin);

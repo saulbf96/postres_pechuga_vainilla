@@ -37,9 +37,7 @@ public interface IPerfilesService
     // uno mismo o el ultimo administrador activo.
     Task CambiarActivoAsync(string usuarioId, bool activo, string idAdminActual, CancellationToken cancellationToken);
 
-    // La contraseña actual sigue sirviendo para entrar, pero al entrar se le pide una nueva.
-    Task ExpirarPasswordAsync(string usuarioId, CancellationToken cancellationToken);
-
     // Reemplaza la contraseña por una temporal (para quien la olvido) y la regresa.
-    Task<string> RestablecerPasswordAsync(string usuarioId, CancellationToken cancellationToken);
+    // Lanza ReglaDeNegocioException si es uno mismo.
+    Task<string> RestablecerPasswordAsync(string usuarioId, string idAdminActual, CancellationToken cancellationToken);
 }

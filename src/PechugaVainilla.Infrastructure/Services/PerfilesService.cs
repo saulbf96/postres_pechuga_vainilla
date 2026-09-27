@@ -130,12 +130,12 @@ public class PerfilesService : IPerfilesService
         {
             if (usuario.Id == idAdminActual)
             {
-                throw new ReglaDeNegocioException("No puedes desactivar tu propia cuenta.");
+                throw new ReglaDeNegocioException("No puedes eliminar tu propia cuenta.");
             }
 
             if (await _userManager.IsInRoleAsync(usuario, "Administrador") && usuario.Activo && await ContarAdministradoresActivosAsync() <= 1)
             {
-                throw new ReglaDeNegocioException("No se puede desactivar al último administrador activo.");
+                throw new ReglaDeNegocioException("No se puede eliminar al último administrador activo.");
             }
         }
 
@@ -152,19 +152,13 @@ public class PerfilesService : IPerfilesService
     private async Task<int> ContarAdministradoresActivosAsync() =>
         (await _userManager.GetUsersInRoleAsync("Administrador")).Count(u => u.Activo);
 
-    public async Task ExpirarPasswordAsync(string usuarioId, CancellationToken cancellationToken)
+    public async Task<string> RestablecerPasswordAsync(string usuarioId, string idAdminActual, CancellationToken cancellationToken)
     {
-        var usuario = await BuscarUsuarioAsync(usuarioId);
+        if (usuarioId == idAdminActual)
+        {
+            throw new ReglaDeNegocioException("No puedes restablecer tu propia contraseña. Pídeselo a otro administrador.");
+        }
 
-        usuario.DebeCambiarPassword = true;
-        await _userManager.UpdateAsync(usuario);
-
-        // Cambiar el sello de seguridad invalida las sesiones abiertas: tiene que volver a entrar.
-        await _userManager.UpdateSecurityStampAsync(usuario);
-    }
-
-    public async Task<string> RestablecerPasswordAsync(string usuarioId, CancellationToken cancellationToken)
-    {
         var usuario = await BuscarUsuarioAsync(usuarioId);
         var passwordTemporal = GenerarPasswordTemporal();
 

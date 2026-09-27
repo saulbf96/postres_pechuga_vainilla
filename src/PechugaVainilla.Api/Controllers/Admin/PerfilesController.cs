@@ -55,26 +55,6 @@ public class PerfilesController : ControllerBase
         }
     }
 
-    // Expirar: el administrador no ve ninguna contraseña; al entrar, el usuario pone una nueva.
-    [HttpPost("{id}/expirar-password")]
-    public async Task<IActionResult> ExpirarPassword(string id, AutorizacionAdminRequest request, CancellationToken cancellationToken)
-    {
-        if (!await _perfilesService.VerificarAdministradorAsync(request.EmailAdmin, request.PasswordAdmin))
-        {
-            return BadRequest(new { mensaje = "El correo o la contraseña del administrador no son correctos." });
-        }
-
-        try
-        {
-            await _perfilesService.ExpirarPasswordAsync(id, cancellationToken);
-            return NoContent();
-        }
-        catch (ReglaDeNegocioException ex)
-        {
-            return BadRequest(new { mensaje = ex.Message });
-        }
-    }
-
     // Restablecer: para quien olvido su contraseña. Regresa una temporal para pasarsela al usuario.
     [HttpPost("{id}/restablecer-password")]
     public async Task<IActionResult> RestablecerPassword(string id, AutorizacionAdminRequest request, CancellationToken cancellationToken)
@@ -86,7 +66,8 @@ public class PerfilesController : ControllerBase
 
         try
         {
-            var passwordTemporal = await _perfilesService.RestablecerPasswordAsync(id, cancellationToken);
+            var idAdminActual = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+            var passwordTemporal = await _perfilesService.RestablecerPasswordAsync(id, idAdminActual, cancellationToken);
             return Ok(new { passwordTemporal });
         }
         catch (ReglaDeNegocioException ex)

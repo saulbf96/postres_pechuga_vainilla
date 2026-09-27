@@ -1,11 +1,12 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../core/services/auth';
 import { PanelService } from '../../core/services/panel';
 import { PanelNav } from '../../shared/panel-nav/panel-nav';
 import type { AutorizacionAdminRequest, PerfilDto } from '../../core/models/panel.model';
 
 type Rol = 'Administrador' | 'Cliente';
-type TipoAccion = 'expirar' | 'restablecer' | 'desactivar' | 'reactivar';
+type TipoAccion = 'restablecer' | 'desactivar' | 'reactivar';
 
 @Component({
   imports: [FormsModule, PanelNav],
@@ -15,6 +16,12 @@ type TipoAccion = 'expirar' | 'restablecer' | 'desactivar' | 'reactivar';
 })
 export class PanelPerfiles implements OnInit {
   private readonly panelService = inject(PanelService);
+  private readonly authService = inject(AuthService);
+
+  // true si la tarjeta es de quien tiene la sesion abierta: no puede restablecerse ni eliminarse a si mismo.
+  protected esYo(perfil: PerfilDto): boolean {
+    return perfil.id === this.authService.usuario()?.id;
+  }
 
   protected readonly perfiles = signal<PerfilDto[]>([]);
   protected readonly cargando = signal(true);
@@ -232,9 +239,8 @@ export class PanelPerfiles implements OnInit {
 
   protected tituloAccion(tipo: TipoAccion): string {
     return {
-      expirar: 'Expirar contraseña',
       restablecer: 'Restablecer contraseña',
-      desactivar: 'Desactivar usuario',
+      desactivar: 'Eliminar usuario',
       reactivar: 'Reactivar usuario',
     }[tipo];
   }
@@ -273,12 +279,6 @@ export class PanelPerfiles implements OnInit {
     this.procesandoAccion.set(true);
     const id = accion.perfil.id;
     switch (accion.tipo) {
-      case 'expirar':
-        this.panelService.expirarPassword(id, autorizacion).subscribe({
-          next: () => alTerminar('Contraseña expirada', `A "${nombre}" se le pedirá una contraseña nueva la próxima vez que entre.`),
-          error: alFallar,
-        });
-        break;
       case 'restablecer':
         this.panelService.restablecerPassword(id, autorizacion).subscribe({
           next: (r) =>
@@ -288,7 +288,7 @@ export class PanelPerfiles implements OnInit {
         break;
       case 'desactivar':
         this.panelService.desactivarUsuario(id, autorizacion).subscribe({
-          next: () => alTerminar('Usuario desactivado', `"${nombre}" ya no puede entrar. Sus pedidos se conservan y puedes reactivarlo cuando quieras.`),
+          next: () => alTerminar('Usuario eliminado', `"${nombre}" ya no puede entrar. Sus pedidos se conservan y puedes reactivarlo cuando quieras.`),
           error: alFallar,
         });
         break;

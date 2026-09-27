@@ -111,7 +111,7 @@ export interface CrearUsuarioRequest {
   rol: 'Administrador' | 'Cliente';
 }
 
-// Correo y contraseña de un administrador para autorizar expirar/restablecer contraseñas.
+// Correo y contraseña de un administrador para autorizar acciones delicadas (restablecer contraseña, eliminar/reactivar).
 export interface AutorizacionAdminRequest {
   emailAdmin: string;
   passwordAdmin: string;
